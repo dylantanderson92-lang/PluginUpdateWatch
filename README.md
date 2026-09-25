@@ -2,7 +2,7 @@
 
 Detect installed Paper plugins, find update sources, notify admins, and download updates on request. Supports **Modrinth, Spigot and GitHub**.
 
-**[Download from Releases](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/latest)** — choose `PluginUpdateWatch-1.2.0.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation.
+**[Download from Releases](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/latest)** — choose `PluginUpdateWatch-1.2.0.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation. You will be able to download from Modrinth shortly
 
 ## Install or upgrade
 
