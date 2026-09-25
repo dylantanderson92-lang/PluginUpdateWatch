@@ -69,6 +69,8 @@ Downloads are limited to 100 MiB and validated as a plugin JAR with the expected
 
 ## Version support and limitations
 
+See [the compatibility verification report](COMPATIBILITY.md) for the API checks, 14 passing tests on each endpoint API/Java combination, user-confirmed earlier behavior on Paper 26.3, and remaining live Modrinth verification.
+
 Targets **Paper 1.21.11 through 26.3**, using the 1.21.11 API and Java 21 bytecode. Run each Paper version on the Java version it requires (Java 21 for 1.21.11; newer Paper releases may require Java 25). Folia is not supported. This is a compatibility target, not a claim of live testing on every release.
 
 There is no universal update source in plugin metadata: unconfigured plugins are explicitly reported as untracked. GitHub/Spigot releases are not automatically filtered by Minecraft compatibility. Numeric dotted versions are ordered numerically; custom labels such as `build-42` or `1.2-RC1` are reported as different releases requiring review. Equal versions and locally newer numeric versions are not offered as updates. Build metadata after `+` is ignored.
