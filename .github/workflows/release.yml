@@ -1,0 +1,45 @@
+name: Verify and publish 1.2.0
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'downloads/PluginUpdateWatch-1.2.0.jar'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        java: ['21', '25']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - run: mvn --batch-mode --no-transfer-progress clean verify
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify distributed JAR
+        working-directory: downloads
+        run: sha256sum --check PluginUpdateWatch-1.2.0.jar.sha256
+      - name: Publish release and JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if ! gh release view v1.2.0 >/dev/null 2>&1; then
+            gh release create v1.2.0 --target "$GITHUB_SHA" --title "PluginUpdateWatch 1.2.0" --notes-file RELEASE-NOTES.md --latest
+          fi
+          gh release upload v1.2.0 downloads/PluginUpdateWatch-1.2.0.jar downloads/PluginUpdateWatch-1.2.0.jar.sha256 --clobber

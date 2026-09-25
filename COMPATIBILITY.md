@@ -1,3 +1,7 @@
+# 1.2.0 verification update
+
+All updated source compiled against Paper 1.21.11 and the cached 26.3 build 6 alpha API. The 24 local tests passed on Java 25. The new discovery flow has not been tested on a live server. The evidence below describes 1.1.0 and does not extend its runtime verification to 1.2.0.
+
 # Compatibility verification — PluginUpdateWatch 1.1.0
 
 Checked 25 September 2026.
@@ -22,4 +26,3 @@ Actual Paper server JARs were not available locally, and outbound network access
 On a test copy of the server, install 1.1.0 and configure an installed plugin with its correct Modrinth project slug. Run `pu reload`, `pu check`, and `pu list` in the console. Verify the latest version against the project's stable releases for the server's Minecraft version. If an update exists, run `pu download <plugin>` and confirm that its JAR is saved under `plugins/PluginUpdateWatch/downloads/` without replacing the installed plugin. With the latest version installed, expect no update. If the publisher has not listed a compatible stable release, expect an explicit message rather than an incompatible download. Check `logs/latest.log` for exceptions.
 
 The plugin itself remains unchanged by this verification.
-

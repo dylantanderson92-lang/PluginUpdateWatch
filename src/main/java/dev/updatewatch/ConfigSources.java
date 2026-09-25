@@ -1,0 +1,54 @@
+package dev.updatewatch;
+
+import org.bukkit.configuration.file.YamlConfiguration;
+import java.util.*;
+
+final class ConfigSources {
+    record Resolution(List<Remote.Source> sources, Map<String, String> notes, List<Map<String, Object>> entries) {}
+    static Resolution resolve(YamlConfiguration config, List<Discovery.Installed> installed, List<Discovery.Jar> jars,
+                              String minecraft, boolean scan, Discovery.Lookup lookup) {
+        if (config.contains("updates") && !config.isList("updates")) throw new IllegalArgumentException("updates must be a YAML list of jar/source entries");
+        List<Map<String, Object>> entries = new ArrayList<>();
+        for (Map<?, ?> row : config.getMapList("updates")) {
+            Map<String, Object> copy = new LinkedHashMap<>(); row.forEach((k,v) -> copy.put(k.toString(), v)); entries.add(copy);
+        }
+        List<Remote.Source> sources = new ArrayList<>(); Map<String, String> notes = new LinkedHashMap<>();
+        for (var p : installed) {
+            var jar = Discovery.match(jars, p);
+            var legacy = config.getConfigurationSection("plugins." + p.name());
+            var matching = jar == null ? List.<Map<String,Object>>of() : entries.stream()
+                    .filter(e -> jar.path().getFileName().toString().equals(Objects.toString(e.get("jar"), ""))).toList();
+            if (matching.size() > 1) { notes.put(p.name(), "Duplicate config entries for " + jar.path().getFileName()); continue; }
+            Map<String,Object> entry = matching.isEmpty() ? null : matching.getFirst();
+            // Existing legacy entries remain authoritative unless the user supplies a new explicit link.
+            if (legacy != null && (entry == null || Objects.toString(entry.get("source"), "").isBlank())) {
+                if (!legacy.getBoolean("enabled", true)) { notes.put(p.name(), "Disabled in existing configuration"); continue; }
+                String type = legacy.getString("source", "spigot");
+                sources.add(new Remote.Source(p.name(), p.version(), type, legacy.getString(type.equalsIgnoreCase("github") ? "repository"
+                        : type.equalsIgnoreCase("modrinth") ? "project" : "resource-id", ""), legacy.getString("asset-regex", ".*\\.jar"), minecraft));
+                continue;
+            }
+            if (jar == null) { notes.put(p.name(), "Cannot uniquely match original JAR in plugins folder; check for duplicate or moved JARs"); continue; }
+            if (entry == null && scan) {
+                entry = new LinkedHashMap<>(); entry.put("jar", jar.path().getFileName().toString()); entry.put("source", ""); entries.add(entry);
+            }
+            if (entry == null) { notes.put(p.name(), "Not configured; run /pu scan"); continue; }
+            String link = Objects.toString(entry.get("source"), "").trim();
+            if (link.isBlank() && scan) {
+                try { link = Discovery.discover(jar, p, lookup); entry.put("source", link); }
+                catch (Exception e) { notes.put(p.name(), "Discovery failed: " + e.getMessage() + "; paste a source link for " + jar.path().getFileName()); continue; }
+            }
+            if (link.isBlank()) { notes.put(p.name(), "Source not identified; paste a source link for " + jar.path().getFileName() + " in config.yml"); continue; }
+            try { sources.add(SourceLink.parse(link).source(p.name(), p.version(), minecraft)); }
+            catch (Exception e) { notes.put(p.name(), "Invalid source link for " + jar.path().getFileName() + ": " + e.getMessage()); }
+        }
+        for (var entry : entries) {
+            String filename = Objects.toString(entry.get("jar"), "");
+            if (!Discovery.validFilename(filename)) notes.put("Config: " + filename, "jar must be a filename ending in .jar, without a folder path");
+            else if (jars.stream().noneMatch(j -> j.path().getFileName().toString().equals(filename)
+                    && installed.stream().anyMatch(p -> p.name().equals(j.name()) && p.version().equals(j.version()))))
+                notes.put("Config: " + filename, "JAR does not match an installed plugin; update the filename if it changed");
+        }
+        return new Resolution(sources, notes, entries);
+    }
+}

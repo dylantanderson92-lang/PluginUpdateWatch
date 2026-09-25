@@ -10,6 +10,11 @@ import java.util.jar.JarFile;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 final class Remote {
+    static final class HttpError extends IOException {
+        private static final long serialVersionUID = 1L;
+        final int code;
+        HttpError(int code) { super("Source returned HTTP " + code); this.code = code; }
+    }
     record Source(String name, String installed, String type, String id, String asset, String minecraft) {}
     record Release(String version, String download, String page, String sha512) {
         Release(String version, String download, String page) { this(version, download, page, null); }
@@ -29,14 +34,14 @@ final class Remote {
             HttpURLConnection c = (HttpURLConnection) uri.toURL().openConnection();
             c.setInstanceFollowRedirects(false);
             c.setConnectTimeout(15000); c.setReadTimeout(30000);
-            c.setRequestProperty("User-Agent", "PluginUpdateWatch/1.1.0 (Paper plugin update checker)");
+            c.setRequestProperty("User-Agent", "PluginUpdateWatch/1.2.0 (Paper plugin update checker)");
             int code = c.getResponseCode();
             if (code >= 300 && code < 400) {
                 String location = c.getHeaderField("Location"); c.disconnect();
                 if (location == null) throw new IOException("Redirect missing location");
                 uri = uri.resolve(location); continue;
             }
-            if (code != 200) { c.disconnect(); throw new IOException("Source returned HTTP " + code); }
+            if (code != 200) { c.disconnect(); throw new HttpError(code); }
             return new FilterInputStream(c.getInputStream()) {
                 @Override public void close() throws IOException { try { super.close(); } finally { c.disconnect(); } }
             };

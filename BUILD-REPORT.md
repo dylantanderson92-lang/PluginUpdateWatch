@@ -1,8 +1,8 @@
-# Build verification
+# Build verification — 1.2.0
 
-- Compiled against Paper API `1.21.11-R0.1-SNAPSHOT` with Java 21 bytecode.
-- All 14 JUnit tests passed: Modrinth release filtering, file selection, URL encoding and checksum validation; numeric/custom version handling; matching Bukkit and Paper descriptors; rejection of mismatched plugin names, non-plugin JARs, and HTML responses.
-- Packaged with Maven Shade; bundled Gson is relocated into `dev.updatewatch.lib.gson`.
-- The local Windows sandbox caused javac's ZIP filesystem cleanup to fail with an access-denied error. This build used Eclipse ECJ 3.41.0 to compile and Maven Surefire/JAR/Shade to test and package. The supplied Maven project uses standard javac for normal environments.
-- No live Paper server integration test was performed. Paper 1.21.11–26.3 is the intended compatibility range; runtime compatibility across that range is not verified.
-- External API lookups, rate limits, and real publisher downloads were not exercised by the automated tests.
+- Compiled all source against Paper 1.21.11 and cached Paper 26.3 build 6 alpha APIs, targeting Java 21 bytecode.
+- All 24 automated tests passed: 10 discovery/config/link tests, 7 Modrinth tests, 5 JAR validation tests and 2 version-comparison tests.
+- Discovery tests cover hash matching, saved configuration round trips, unresolved sources, legacy/disabled settings, duplicate JARs, metadata fallback, network errors, duplicate config entries, filename/link validation and checks without discovery.
+- Compiled locally with Eclipse ECJ 3.41.0; tests and shading run with Maven. Gson is relocated.
+- The new discovery flow has not been run inside a live Paper server. API compilation and fixture-based tests do not establish full runtime compatibility.
+- The GitHub release workflow independently builds/tests with Maven on Java 21 and 25 before attaching the distributed JAR. Workflow status is the source of truth for those remote checks.

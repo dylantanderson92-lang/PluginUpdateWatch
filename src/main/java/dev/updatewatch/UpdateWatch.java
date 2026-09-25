@@ -6,7 +6,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.*;
 import org.bukkit.event.*;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import java.util.*;
@@ -20,6 +19,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
     private BukkitTask timer;
     private boolean checking;
     private int generation;
+    private Map<String, String> discoveryNotes = Map.of();
 
     @Override public void onEnable() {
         saveDefaultConfig();
@@ -32,7 +32,8 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
     private void schedule() {
         if (timer != null) timer.cancel();
         long minutes = Math.clamp(getConfig().getLong("check-interval-minutes", 360), 15, 10080);
-        timer = getServer().getScheduler().runTaskTimer(this, () -> check(null), 100, minutes * 1200);
+        boolean[] first = {true};
+        timer = getServer().getScheduler().runTaskTimer(this, () -> { check(null, first[0]); first[0] = false; }, 100, minutes * 1200);
     }
     private void sync(Runnable action) {
         if (isEnabled()) {
@@ -42,30 +43,31 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
     private void tell(CommandSender sender, String message) {
         sender.sendMessage(Component.text("[Updates] ", NamedTextColor.AQUA).append(Component.text(message, NamedTextColor.GRAY)));
     }
-    private List<Remote.Source> sources() {
-        List<Remote.Source> list = new ArrayList<>();
-        var config = getConfig().getConfigurationSection("plugins");
-        if (config == null) return list;
-        for (Plugin p : getServer().getPluginManager().getPlugins()) {
-            var section = config.getConfigurationSection(p.getName());
-            if (section == null || !section.getBoolean("enabled", true)) continue;
-            String type = section.getString("source", "spigot");
-            list.add(new Remote.Source(p.getName(), p.getPluginMeta().getVersion(), type,
-                    section.getString(type.equalsIgnoreCase("github") ? "repository" : type.equalsIgnoreCase("modrinth") ? "project" : "resource-id", ""),
-                    section.getString("asset-regex", ".*\\.jar"), getServer().getMinecraftVersion()));
-        }
-        return list;
-    }
-    private void check(CommandSender sender) {
+    private void check(CommandSender sender, boolean scan) {
         if (checking) { if (sender != null) tell(sender, "A check is already running."); return; }
-        List<Remote.Source> sources = sources();
-        if (sources.isEmpty()) { if (sender != null) tell(sender, "No installed plugins have configured sources. Edit plugins/PluginUpdateWatch/config.yml, then /pu reload."); return; }
+        var installed = Arrays.stream(getServer().getPluginManager().getPlugins()).filter(p -> p != this)
+                .map(p -> new Discovery.Installed(p.getName(), p.getPluginMeta().getVersion(), p.getPluginMeta().getWebsite())).toList();
+        String snapshot = getConfig().saveToString();
+        var configFile = getDataFolder().toPath().resolve("config.yml");
+        String diskSnapshot;
+        try { diskSnapshot = java.nio.file.Files.readString(configFile); }
+        catch (Exception e) { tell(sender == null ? getServer().getConsoleSender() : sender, "Cannot read config.yml: " + e.getMessage()); return; }
+        String minecraft = getServer().getMinecraftVersion();
+        var pluginsFolder = getDataFolder().toPath().getParent();
         checking = true;
         int epoch = generation;
-        if (sender != null) tell(sender, "Checking " + sources.size() + " plugin(s)...");
+        if (sender != null) tell(sender, scan ? "Scanning installed JARs and checking update sources..." : "Checking configured plugins...");
         worker.execute(() -> {
+            ConfigSources.Resolution resolution;
+            try {
+                var config = new org.bukkit.configuration.file.YamlConfiguration(); config.loadFromString(snapshot);
+                resolution = ConfigSources.resolve(config, installed, Discovery.inventory(pluginsFolder), minecraft, scan, Discovery::modrinthProject);
+            } catch (Exception e) {
+                sync(() -> { checking = false; if (epoch == generation) tell(sender == null ? getServer().getConsoleSender() : sender, "Scan/check failed: " + e.getMessage()); });
+                return;
+            }
             Map<String, Result> checked = new LinkedHashMap<>();
-            for (var source : sources) {
+            for (var source : resolution.sources()) {
                 if (Thread.currentThread().isInterrupted()) break;
                 Result result;
                 try {
@@ -77,7 +79,18 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             sync(() -> {
                 checking = false;
                 if (epoch != generation) return;
+                try {
+                    if (!snapshot.equals(getConfig().saveToString()) || !diskSnapshot.equals(java.nio.file.Files.readString(configFile))) {
+                        tell(sender == null ? getServer().getConsoleSender() : sender, "Config changed during scan; results discarded. Run /pu reload."); return;
+                    }
+                    if (scan && !resolution.entries().equals(getConfig().getMapList("updates"))) {
+                        getConfig().set("updates", resolution.entries());
+                        getConfig().save(configFile.toFile());
+                    }
+                } catch (Exception e) { tell(sender == null ? getServer().getConsoleSender() : sender, "Could not save discovery config: " + e.getMessage()); return; }
                 boolean changed = !checked.equals(results);
+                changed |= !discoveryNotes.equals(resolution.notes());
+                discoveryNotes = resolution.notes();
                 results.clear(); results.putAll(checked);
                 if (sender != null) show(sender);
                 if (changed) {
@@ -94,7 +107,8 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             tell(event.getPlayer(), "Plugin updates are available. Use /pu list.");
     }
     private void show(CommandSender sender) {
-        if (results.isEmpty()) tell(sender, "No results yet. Use /pu check. Only plugins with configured sources are checked.");
+        if (results.isEmpty() && discoveryNotes.isEmpty()) tell(sender, "No results yet. Use /pu scan to detect installed plugins.");
+        discoveryNotes.forEach((name, note) -> tell(sender, name + ": " + note));
         for (Result r : results.values()) {
             if (r.error() != null) { tell(sender, r.source().name() + ": check failed - " + r.error()); continue; }
             String label = switch (r.status()) {
@@ -112,7 +126,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             sender.sendMessage(line);
         }
         long untracked = Arrays.stream(getServer().getPluginManager().getPlugins()).filter(p -> p != this && !results.containsKey(p.getName().toLowerCase(Locale.ROOT))).count();
-        tell(sender, untracked + " other plugin(s) are untracked; add their sources in config.yml.");
+        tell(sender, untracked + " plugin(s) not checked. See messages above; manual entries need only jar and source link.");
     }
     private void download(CommandSender sender, String name) {
         String key = name.toLowerCase(Locale.ROOT);
@@ -137,16 +151,17 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         String sub = args.length == 0 ? "list" : args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "list" -> show(sender);
-            case "check" -> check(sender);
+            case "check" -> check(sender, false);
+            case "scan" -> check(sender, true);
             case "download" -> { if (args.length == 2) download(sender, args[1]); else tell(sender, "Usage: /pu download <plugin>"); }
-            case "reload" -> { reloadConfig(); generation++; results.clear(); schedule(); tell(sender, "Configuration reloaded. Use /pu check."); }
-            default -> tell(sender, "Usage: /pu [list|check|download <plugin>|reload]");
+            case "reload" -> { reloadConfig(); generation++; results.clear(); discoveryNotes = Map.of(); schedule(); tell(sender, "Configuration reloaded. Automatic scan will run shortly."); }
+            default -> tell(sender, "Usage: /pu [list|scan|check|download <plugin>|reload]");
         }
         return true;
     }
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission("pluginupdatewatch.admin")) return List.of();
-        List<String> choices = args.length == 1 ? List.of("list", "check", "download", "reload")
+        List<String> choices = args.length == 1 ? List.of("list", "scan", "check", "download", "reload")
                 : args.length == 2 && args[0].equalsIgnoreCase("download") ? results.values().stream()
                 .filter(r -> r.error() == null && r.status() != Versions.Status.CURRENT && r.release().download() != null).map(r -> r.source().name()).toList() : List.of();
         String prefix = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);

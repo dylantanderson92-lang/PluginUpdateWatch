@@ -1,5 +1,5 @@
 name: PluginUpdateWatch
-version: 1.1.0
+version: 1.2.0
 main: dev.updatewatch.UpdateWatch
 api-version: '1.21.11'
 description: Checks configured plugin sources and downloads updates on request.
@@ -8,7 +8,7 @@ commands:
     aliases: [pu]
     description: Check and download plugin updates
     permission: pluginupdatewatch.admin
-    usage: /pu [list|check|download <plugin>|reload]
+    usage: /pu [list|scan|check|download <plugin>|reload]
 permissions:
   pluginupdatewatch.admin:
     default: op
