@@ -1,0 +1,20 @@
+# Checks run off the server thread. Minimum interval: 15 minutes.
+check-interval-minutes: 360
+notify-on-join: true
+# Only plugins with a configured source are checked. Names must match /plugins.
+# A Spigot resource ID is the number at the end of its resource page URL.
+# GitHub asset-regex must match exactly one JAR in the latest stable release.
+# Modrinth project is the slug from modrinth.com/plugin/SLUG or a project ID.
+# Modrinth checks stable releases for your server's Minecraft version.
+plugins: {}
+# plugins:
+#   ExamplePlugin:
+#     source: spigot
+#     resource-id: 12345
+#   AnotherPlugin:
+#     source: github
+#     repository: owner/repository
+#     asset-regex: '^AnotherPlugin-.*\.jar$'
+#   YourPluginName:
+#     source: modrinth
+#     project: your-plugin-slug

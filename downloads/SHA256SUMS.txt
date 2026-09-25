@@ -1,0 +1,1 @@
+9d0decc8fc3f5d74b29ba436d3eb716ee7c24160e1821872fd1c8a04e08eabad  PluginUpdateWatch-1.1.0.jar

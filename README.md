@@ -1,11 +1,34 @@
-[README.md](https://github.com/user-attachments/files/32298808/README.md)
 # PluginUpdateWatch
 
 A Paper plugin that checks configured plugins for new releases, notifies admins, and downloads updates on request.
 
+**[Download PluginUpdateWatch 1.1.0](https://github.com/dylantanderson92-lang/PluginUpdateWatch/raw/refs/heads/main/downloads/PluginUpdateWatch-1.1.0.jar)**
+
+It supports **Modrinth, Spigot, and GitHub**. Tell it where each plugin is published once; it then checks automatically every six hours and alerts admins. Downloading an update saves a JAR on the server. You still install that JAR while the server is stopped.
+
+## Quick setup with Modrinth
+
+1. Stop your server. Put the downloaded **JAR** in the server's `plugins` folder. If you installed 1.0.0, replace its JAR. Keep your existing configuration folder. Start the server.
+2. Open `plugins/PluginUpdateWatch/config.yml` in your server's file manager.
+3. Replace the line `plugins: {}` with the following block (or add this entry under your existing `plugins:` section):
+
+```yaml
+plugins:
+  YourPluginName:
+    source: modrinth
+    project: your-plugin-slug
+```
+
+Replace `YourPluginName` with the name shown by `/plugins`. Replace `your-plugin-slug` with the last part of that plugin's Modrinth project URL. For example, a URL ending in `/plugin/example-plugin` uses `project: example-plugin`. These are placeholders, not real plugin settings. Use spaces for indentation, and keep only one `plugins:` section.
+
+4. Save the file. Run `/pu reload`, then `/pu check` as an operator. In the server console, omit the leading slash.
+5. When an update appears, run `/pu download YourPluginName`. The file is saved in `plugins/PluginUpdateWatch/downloads/`. Stop the server, replace the old plugin JAR in `plugins/` with that file, and restart. Keep the plugin's data/configuration folder.
+
+The server's Minecraft version is detected automatically. Only stable releases listed for that version and Paper, Spigot, or Bukkit are considered. Alpha/beta releases and Fabric/Forge-only builds are excluded. If no compatible stable release exists, the plugin reports that explicitly. Modrinth's primary matching JAR is preferred; ambiguous files require manual download or an `asset-regex` selecting the right file. Downloads are verified against Modrinth's SHA-512 checksum. Existing Spigot and GitHub settings continue to work.
+
 ## Install
 
-1. Put `PluginUpdateWatch-1.0.0.jar` in your server's `plugins` folder and restart.
+1. Put `PluginUpdateWatch-1.1.0.jar` in your server's `plugins` folder and restart.
 2. Edit `plugins/PluginUpdateWatch/config.yml`. Add a source for each plugin you want to track (use its exact name from `/plugins`).
 3. Run `/pu reload`, then `/pu check`.
 
@@ -20,6 +43,9 @@ plugins:
     source: github
     repository: owner/repository
     asset-regex: '^AnotherPlugin-.*\.jar$'
+  YourPluginName:
+    source: modrinth
+    project: your-plugin-slug
 ```
 
 These are placeholders: replace names and IDs with the real plugins you use. For Spigot, take the numeric ID from the resource page URL. For GitHub, use `owner/repository`; the asset expression must select exactly one JAR from the latest stable release. Multi-module projects need an expression specific to the installed plugin. Only public repositories are supported.
@@ -51,6 +77,6 @@ Spiget may lag behind Spigot. Premium and externally hosted Spigot resources req
 
 ## Build
 
-Install JDK 21+ and Maven 3.9+, then run `mvn clean package`. The shaded plugin is `target/PluginUpdateWatch-1.0.0.jar`; do not install the `original-` JAR. Gson is bundled and relocated; the Paper API is provided by the server. Tests cover version comparisons and rejection of incorrect downloads.
+Install JDK 21+ and Maven 3.9+, then run `mvn clean package`. The shaded plugin is `target/PluginUpdateWatch-1.1.0.jar`; do not install the `original-` JAR. Gson is bundled and relocated; the Paper API is provided by the server. Tests cover version comparisons and rejection of incorrect downloads.
 
 API references: [Paper setup](https://docs.papermc.io/paper/dev/project-setup/), [GitHub releases](https://docs.github.com/en/rest/releases/releases), [Spiget API](https://github.com/SpiGetOrg/Documentation/blob/master/swagger.yml).
