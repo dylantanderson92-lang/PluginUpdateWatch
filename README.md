@@ -74,3 +74,7 @@ The older `plugins:` format remains supported, including `enabled: false` and `a
 Targets Paper **1.21.11–26.3**, using Java 21 bytecode and no server internals. Use the runtime required by your Paper release. Folia is not supported. See [COMPATIBILITY.md](COMPATIBILITY.md) and [BUILD-REPORT.md](BUILD-REPORT.md) for verification scope.
 
 Build with JDK 21+ and Maven 3.9+: `mvn clean package`. Install `target/PluginUpdateWatch-1.2.0.jar`, not the `original-` JAR. Gson is bundled and relocated. The release workflow builds/tests the source and attaches the distributed JAR to GitHub Releases.
+
+## License
+
+PluginUpdateWatch's project code and documentation, including version 1.2.0, are available under the [MIT License](LICENSE). Third-party dependencies retain their own licenses and notices.
