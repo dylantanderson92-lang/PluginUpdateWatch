@@ -20,9 +20,12 @@ final class Remote {
         Release(String version, String download, String page) { this(version, download, page, null); }
     }
 
+    private static final int MAX_RETRIES = 3;
+    private static final long RETRY_DELAY_MS = 250L;
+
     static InputStream open(String url) throws IOException {
         URI uri = URI.create(url);
-        for (int redirects = 0; redirects < 6; redirects++) {
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
             if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null)
                 throw new IOException("Only HTTPS URLs are accepted");
             for (InetAddress address : InetAddress.getAllByName(uri.getHost())) {
@@ -40,6 +43,14 @@ final class Remote {
                 String location = c.getHeaderField("Location"); c.disconnect();
                 if (location == null) throw new IOException("Redirect missing location");
                 uri = uri.resolve(location); continue;
+            }
+            if (code == 429 || code == 500 || code == 502 || code == 503 || code == 504) {
+                c.disconnect();
+                if (attempt < MAX_RETRIES) {
+                    try { Thread.sleep(RETRY_DELAY_MS * (attempt + 1)); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException("Interrupted while retrying API request", e); }
+                    continue;
+                }
+                throw new HttpError(code);
             }
             if (code != 200) { c.disconnect(); throw new HttpError(code); }
             return new FilterInputStream(c.getInputStream()) {
