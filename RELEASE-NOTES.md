@@ -1,4 +1,16 @@
-# PluginUpdateWatch 1.3.0 maintenance candidate
+# Unreleased
+
+- Block source selection for on-disk filenames that differ only by case, such as `Alpha.jar` and `alpha.jar` on Linux. Manual entries, automatic discovery and legacy fallback all report the conflicting files in `/pu list` and retain the config rows for correction.
+- Add three discovery regression tests, bringing the local suite from 72 to **75 tests**, all passing with Maven `clean verify` on Java 21.
+- Verify the locally packaged follow-up on Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25, including real Modrinth downloads and missing-checksum rejection.
+
+These changes are not included in the published 1.3.0 JAR. The project version remains 1.3.0 until a future release is prepared. See [BUILD-REPORT.md](BUILD-REPORT.md) and [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) for separate release and follow-up evidence.
+
+---
+
+## PluginUpdateWatch 1.3.0
+
+Download **PluginUpdateWatch-1.3.0.jar** from Assets. Stop your server, replace the older PluginUpdateWatch JAR, keep its configuration folder, then restart.
 
 - Retry HTTP 429 and all 5xx responses with three total attempts by default and 250/500 ms waits. Honor short Retry-After delays; defer longer waits with actionable messages and per-scan cooldowns.
 - Require provider checksums by default. Modrinth provides SHA-512; GitHub may provide a SHA-256 asset digest; Spigot/Spiget generally has no supported digest. Missing checksums block downloads unless explicitly allowed in config.
@@ -8,7 +20,7 @@
 - Keep the minimum API at 1.21.11 and document the target Paper 1.21.11–26.3 range separately from tested API/runtime combinations.
 - Keep server-thread-owned state, immutable background reports, reload invalidation and atomic config saves.
 - Validate archive CRCs, entry paths/size limits, descriptor identity/version and main-class presence before accepting downloads.
-- Add PR/main CI on Java 21 and 25, development artifacts, and tag-triggered releases using the exact verified JAR and checksum with generated release notes.
+- Add PR/main CI on Java 21 and 25, development artifacts, and tag-triggered releases using the exact verified JAR and checksum with automatically generated release notes.
 - Retain configurable network/download limits, the optional plugin directory, local `/pu stats` and debug summaries.
 
 **Upgrade note:** existing jar/source and legacy entries need no migration. If the checksum setting is absent, downloads without provider checksums are now blocked. To deliberately restore that earlier permissive behavior, add:
@@ -22,7 +34,7 @@ Keep only one `downloads:` section and run `/pu reload`. This permits unverified
 
 Downloads require a deliberate command and manual installation after stopping the server. Filenames begin with `plugin-` and include a collision-resistant suffix. Unsupported external download hosts require manual download.
 
-Validation: 72 tests passed on Java 21/Paper 1.21.11 API and Java 25/cached Paper 26.3 alpha API. Standard Maven clean verify and packaging passed on Java 21. Live Paper behavior has not been verified for this candidate.
+Validation: standard Maven `clean verify` and packaging passed with **72 tests** on both Java 21 and Java 25 in [release CI](https://github.com/dylantanderson92-lang/PluginUpdateWatch/actions/runs/36248215330). The 72-test suite also passed locally against the cached Paper 26.3 alpha API on Java 25. The exact published GitHub Release JAR passed live checks on **Paper 1.21.11 build 132 / Java 21** and **Paper 26.3 build 41 alpha / Java 25**, including scan/check/list/reload, a real LuckPerms Modrinth update download, independent SHA-512 verification, and missing-checksum rejection. See [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) for the published artifact's hash and exact scope. The 26.3 build tested is an alpha; not every intermediate Paper build has been tested.
 
 ---
 
