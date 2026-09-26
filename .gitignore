@@ -1,4 +1,6 @@
 /target/
+/.work/
+/artifacts/
 /dependency-reduced-pom.xml
 /.idea/
 /.vscode/

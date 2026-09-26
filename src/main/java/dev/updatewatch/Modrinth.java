@@ -33,13 +33,13 @@ final class Modrinth {
             Instant published = Instant.parse(v.get("date_published").getAsString());
             if (published.isAfter(newest)) { newest = published; latest = v; }
         }
-        if (latest == null) throw new IOException("No stable Paper/Spigot/Bukkit release listed for Minecraft " + source.minecraft());
+        if (latest == null) throw Failure.problem(Failure.Kind.NO_COMPATIBLE_RELEASE, "No stable Paper/Spigot/Bukkit release listed for Minecraft " + source.minecraft());
         Pattern pattern = Pattern.compile(source.asset());
         List<JsonObject> files = new ArrayList<>(), primary = new ArrayList<>();
         for (JsonElement element : latest.getAsJsonArray("files")) {
             JsonObject file = element.getAsJsonObject();
             String name = file.get("filename").getAsString();
-            if (!name.toLowerCase(Locale.ROOT).endsWith(".jar") || !pattern.matcher(name).matches()) continue;
+            if (!Discovery.validFilename(name) || !pattern.matcher(name).matches()) continue;
             files.add(file);
             if (file.has("primary") && file.get("primary").getAsBoolean()) primary.add(file);
         }
@@ -48,7 +48,7 @@ final class Modrinth {
         if (selected != null) {
             JsonObject hashes = selected.getAsJsonObject("hashes");
             if (hashes == null || !hashes.has("sha512") || !hashes.get("sha512").getAsString().matches("[a-fA-F0-9]{128}"))
-                throw new IOException("Modrinth file is missing a valid SHA-512 checksum");
+                throw Failure.problem(Failure.Kind.INVALID_RESPONSE, "Modrinth file is missing a valid SHA-512 checksum");
             hash = hashes.get("sha512").getAsString();
         }
         return new Remote.Release(latest.get("version_number").getAsString(), selected == null ? null : selected.get("url").getAsString(),

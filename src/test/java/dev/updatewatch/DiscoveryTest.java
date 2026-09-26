@@ -6,7 +6,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.nio.file.*;
 import java.util.*;
 import java.util.jar.*;
-import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DiscoveryTest {
@@ -53,7 +52,7 @@ class DiscoveryTest {
         assertEquals("https://github.com/owner/repo", Discovery.discover(jar(), new Discovery.Installed("Example", "1.0", "https://github.com/owner/repo"), h -> null));
     }
     @Test void reportsNetworkFailureInsteadOfClaimingNoMatch() throws Exception {
-        var r = resolve(new YamlConfiguration(), jar(), true, h -> { throw new IOException("HTTP 429"); });
+        var r = resolve(new YamlConfiguration(), jar(), true, h -> { throw new Remote.HttpError(429); });
         assertTrue(r.notes().get("Example").contains("HTTP 429")); assertTrue(r.sources().isEmpty());
     }
     @Test void duplicateManualEntriesAreNotSilentlySelected() throws Exception {
@@ -78,5 +77,44 @@ class DiscoveryTest {
         assertThrows(IllegalArgumentException.class, () -> SourceLink.parse("https://modrinth.com.evil.test/plugin/example"));
         assertThrows(IllegalArgumentException.class, () -> SourceLink.parse("https://github.com@evil.test/owner/repo"));
         assertThrows(IllegalArgumentException.class, () -> SourceLink.parse("http://modrinth.com/plugin/example"));
+    }
+    @Test void duplicateJarMetadataIsExplainedAndNoSourceIsGuessed() throws Exception {
+        var original = jar(); Files.copy(original.path(), temp.resolve("duplicate.jar"));
+        var result = ConfigSources.resolve(new YamlConfiguration(), List.of(plugin), Discovery.inspect(temp), "26.3", true, h -> { fail("Ambiguous JARs must not be hashed"); return null; });
+        assertTrue(result.sources().isEmpty()); assertTrue(result.entries().isEmpty());
+        String note = result.notes().get("Example");
+        assertTrue(note.contains("Ambiguous")); assertTrue(note.contains("Example-1.0.jar")); assertTrue(note.contains("duplicate.jar"));
+    }
+    @Test void normalizationPreservesMetadataAndRejectsCollisions() {
+        var first = new Discovery.Jar(temp.resolve("first.jar"), " example ", " 1.0 ");
+        assertEquals(first, Discovery.match(List.of(first), plugin)); assertEquals(" example ", first.name());
+        assertNotNull(Discovery.matchReport(List.of(first), plugin).note());
+        var second = new Discovery.Jar(temp.resolve("second.jar"), "EXAMPLE", "1.0");
+        assertNull(Discovery.match(List.of(first, second), plugin));
+        assertNull(Discovery.match(List.of(new Discovery.Jar(temp.resolve("beta.jar"), "Example", "1.0-beta")), plugin));
+        assertNull(Discovery.match(List.of(new Discovery.Jar(temp.resolve("zero.jar"), "Example", "01.0")), plugin));
+    }
+    @Test void mismatchAndOrphanMetadataProduceActionableNotes() {
+        var old = new Discovery.Jar(temp.resolve("old.jar"), "Example", "0.9");
+        var orphan = new Discovery.Jar(temp.resolve("orphan.jar"), "AnotherPlugin", "1.0");
+        var result = ConfigSources.resolve(new YamlConfiguration(), List.of(plugin), List.of(old, orphan), "26.3", true, h -> null);
+        assertTrue(result.notes().get("Example").contains("version mismatch"));
+        assertTrue(result.notes().get("JAR: old.jar").contains("No installed plugin"));
+        assertTrue(result.notes().get("JAR: orphan.jar").contains("startup logs"));
+        assertTrue(result.sources().isEmpty());
+    }
+    @Test void invalidArchivesAndDescriptorsAppearInInventoryNotes() throws Exception {
+        Files.writeString(temp.resolve("broken.jar"), "not a zip");
+        try (var out = new JarOutputStream(Files.newOutputStream(temp.resolve("library.jar")))) { out.putNextEntry(new JarEntry("hello.txt")); out.closeEntry(); }
+        try (var out = new JarOutputStream(Files.newOutputStream(temp.resolve("missing.jar")))) { out.putNextEntry(new JarEntry("plugin.yml")); out.write("name: Missing\n".getBytes()); out.closeEntry(); }
+        var inventory = Discovery.inspect(temp); assertTrue(inventory.jars().isEmpty()); assertEquals(3, inventory.notes().size());
+        var result = ConfigSources.resolve(new YamlConfiguration(), List.of(), inventory, "26.3", true, h -> null);
+        assertEquals(inventory.notes(), result.notes());
+    }
+    @Test void explicitLegacySourceRemainsUsableDespiteAmbiguousJars() throws Exception {
+        var original = jar(); Files.copy(original.path(), temp.resolve("duplicate.jar"));
+        var y = new YamlConfiguration(); y.set("plugins.Example.source", "modrinth"); y.set("plugins.Example.project", "example");
+        var result = ConfigSources.resolve(y, List.of(plugin), Discovery.inspect(temp), "26.3", true, h -> { fail(); return null; });
+        assertEquals(1, result.sources().size()); assertTrue(result.notes().get("Example").contains("Ambiguous"));
     }
 }
