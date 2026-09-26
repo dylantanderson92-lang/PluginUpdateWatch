@@ -8,12 +8,16 @@ import java.util.*;
 
 /** Bounded HTTPS transport; every redirect is validated before opening a connection. */
 final class HttpTransport {
+    /** Default total attempts, including the first request. */
+    static final int MAX_RETRIES = 3;
+    private static final long MAX_INLINE_WAIT_MILLIS = 4000;
     interface Connector { HttpURLConnection connect(URI uri) throws IOException; }
     interface Sleeper { void sleep(long millis) throws InterruptedException; }
     private final Connector connector;
     private final Sleeper sleeper;
     private final Settings settings;
-    private final Map<String, Long> cooldowns = new HashMap<>();
+    private record Cooldown(int status, long untilMillis) {}
+    private final Map<String, Cooldown> cooldowns = new HashMap<>();
     HttpTransport(Settings settings) { this(settings, HttpTransport::connectPublic, Thread::sleep); }
     HttpTransport(Settings settings, Connector connector, Sleeper sleeper) {
         this.settings = settings; this.connector = connector; this.sleeper = sleeper;
@@ -44,34 +48,65 @@ final class HttpTransport {
     }
     InputStream open(String url, int seconds) throws IOException {
         URI initial = safeUri(url);
-        long cooldown = cooldowns.getOrDefault(initial.getHost(), 0L) - System.currentTimeMillis();
-        if (cooldown > 0) throw new Remote.HttpError(429, initial.getHost(), (cooldown + 999) / 1000);
+        if (seconds <= 0) throw new IOException("Request timeout must be positive");
+        checkCooldown(initial.getHost());
         long deadline = System.nanoTime() + seconds * 1_000_000_000L;
         for (int attempt = 1; ; attempt++) {
-            long delay = Math.min(4000L, 500L << (attempt - 1));
+            long delay = 250L * attempt;
+            String waitedHost = null;
             try { return request(initial, deadline); }
             catch (Remote.HttpError error) {
                 boolean rateLimited = error.code == 429 || (error.code == 403 && error.retryAfterSeconds > 0);
-                if (rateLimited) {
-                    long secondsToWait = error.retryAfterSeconds > 0 ? Math.min(error.retryAfterSeconds, 86400) : 60;
-                    cooldowns.put(initial.getHost(), System.currentTimeMillis() + secondsToWait * 1000);
-                    if (secondsToWait > 4 || attempt >= settings.attempts() || remaining(deadline) <= secondsToWait * 1000) throw error;
-                    delay = secondsToWait * 1000;
-                } else if (!retryable(error.code) || error.retryAfterSeconds > 0 || attempt >= settings.attempts()) throw error;
-            } catch (SocketTimeoutException | ConnectException error) {
+                if (!rateLimited && !retryable(error.code)) throw error;
+                if (error.retryAfterSeconds > 0) {
+                    rememberCooldown(initial.getHost(), error.host, error.code, error.retryAfterSeconds);
+                    if (error.retryAfterSeconds > MAX_INLINE_WAIT_MILLIS / 1000 || attempt >= settings.attempts()) throw error;
+                    delay = Math.max(delay, error.retryAfterSeconds * 1000);
+                    if (remaining(deadline) <= delay) throw error;
+                    waitedHost = error.host;
+                } else if (attempt >= settings.attempts()) {
+                    if (rateLimited) {
+                        // An unspecified limit gets bounded attempts first, then a per-scan cooldown.
+                        rememberCooldown(initial.getHost(), error.host, error.code, 60);
+                        throw new Remote.HttpError(error.code, error.host, 60);
+                    }
+                    throw error;
+                }
+            } catch (SocketTimeoutException | SocketException | EOFException error) {
                 if (attempt >= settings.attempts()) throw error;
             }
             if (remaining(deadline) <= delay) throw new SocketTimeoutException("Request deadline exceeded during retry backoff");
             try { sleeper.sleep(delay); }
             catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedIOException("Request cancelled"); }
+            if (waitedHost != null) {
+                // The required wait completed; do not leave a stale cooldown after a successful retry.
+                cooldowns.remove(hostKey(initial.getHost()));
+                cooldowns.remove(hostKey(waitedHost));
+            }
         }
     }
-    static boolean retryable(int status) { return status == 408 || status == 500 || status == 502 || status == 503 || status == 504; }
+    static boolean retryable(int status) { return status == 408 || status == 429 || (status >= 500 && status <= 599); }
+    private static String hostKey(String host) { return host.toLowerCase(Locale.ROOT); }
+    private void rememberCooldown(String initialHost, String responseHost, int status, long seconds) {
+        long now = System.currentTimeMillis();
+        long until = seconds > (Long.MAX_VALUE - now) / 1000 ? Long.MAX_VALUE : now + seconds * 1000;
+        var cooldown = new Cooldown(status, until);
+        cooldowns.put(hostKey(initialHost), cooldown);
+        cooldowns.put(hostKey(responseHost), cooldown);
+    }
+    private void checkCooldown(String host) throws Remote.HttpError {
+        Cooldown cooldown = cooldowns.get(hostKey(host));
+        if (cooldown == null) return;
+        long millis = cooldown.untilMillis() - System.currentTimeMillis();
+        if (millis > 0) throw new Remote.HttpError(cooldown.status(), host, millis / 1000 + (millis % 1000 == 0 ? 0 : 1));
+        cooldowns.remove(hostKey(host));
+    }
     private InputStream request(URI uri, long deadline) throws IOException {
         Set<URI> visited = new HashSet<>();
         for (int redirects = 0; redirects <= 5; redirects++) {
             if (!visited.add(uri)) throw new IOException("Redirect loop detected");
             remaining(deadline);
+            checkCooldown(uri.getHost());
             HttpURLConnection c = connector.connect(uri);
             boolean handedOff = false;
             try {
@@ -111,13 +146,19 @@ final class HttpTransport {
         String value = c.getHeaderField("Retry-After");
         if (value != null) {
             try { return Math.max(1, Long.parseLong(value.trim())); } catch (NumberFormatException ignored) { }
-            try { return Math.max(1, Duration.between(now, ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()).getSeconds()); }
+            try {
+                Duration wait = Duration.between(now, ZonedDateTime.parse(value.trim(), DateTimeFormatter.RFC_1123_DATE_TIME).toInstant());
+                // HTTP dates have second precision; round up so the retry never starts early.
+                return Math.max(1, wait.getSeconds() + (wait.getNano() == 0 ? 0 : 1));
+            }
             catch (RuntimeException ignored) { }
         }
         if ("0".equals(c.getHeaderField("X-RateLimit-Remaining"))) {
             try {
                 long reset = Long.parseLong(c.getHeaderField("X-RateLimit-Reset"));
-                return Math.max(1, c.getURL().getHost().equals("api.github.com") ? reset - now.getEpochSecond() : reset);
+                if (c.getURL().getHost().equalsIgnoreCase("api.github.com"))
+                    return reset <= now.getEpochSecond() ? 1 : reset - now.getEpochSecond();
+                return Math.max(1, reset);
             } catch (RuntimeException ignored) { }
         }
         return 0;

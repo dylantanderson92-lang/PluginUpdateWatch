@@ -2,6 +2,8 @@ name: PluginUpdateWatch
 version: 1.3.0
 main: dev.updatewatch.UpdateWatch
 # Minimum API, not a version range. See COMPATIBILITY.md and Compatibility.java.
+# Targeted Paper range: 1.21.11–26.3. Tested APIs/runtimes are listed in COMPATIBILITY.md.
+# Newer/unknown Minecraft versions receive a startup warning; live server coverage is separate.
 api-version: '1.21.11'
 description: Checks configured plugin sources and downloads updates on request.
 commands:

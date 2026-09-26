@@ -12,8 +12,9 @@ network:
 downloads:
   max-size-mib: 100
   timeout-seconds: 120
-  # True blocks providers/assets with no supported checksum (including most Spigot files).
-  require-checksum: false
+  # Default true, including when omitted from an older config. Blocks files without a checksum.
+  # Set false explicitly to allow them with warnings (needed for most Spigot files).
+  require-checksum: true
 # Manual entries need only the exact JAR filename and source link.
 updates: []
 # updates:
