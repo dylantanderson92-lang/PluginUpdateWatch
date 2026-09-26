@@ -12,6 +12,9 @@ class DownloadValidationTest {
         try (JarOutputStream out = new JarOutputStream(Files.newOutputStream(p))) {
             out.putNextEntry(new JarEntry(descriptor));
             out.write(contents.getBytes(StandardCharsets.UTF_8)); out.closeEntry();
+            out.putNextEntry(new JarEntry("example/Main.class"));
+            try (var in = DownloadValidationTest.class.getResourceAsStream("/dev/updatewatch/DownloadValidationTest.class")) { in.transferTo(out); }
+            out.closeEntry();
         }
         return p;
     }

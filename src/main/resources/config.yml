@@ -1,6 +1,19 @@
 # Scan installed plugins at startup. Fill in blank source links after detection.
 check-interval-minutes: 360
 notify-on-join: true
+# Empty uses the parent of this plugin's data folder. Relative paths use the server working directory.
+plugins-directory: ""
+debug: false
+network:
+  connect-timeout-seconds: 10
+  read-timeout-seconds: 15
+  metadata-timeout-seconds: 30
+  attempts: 3
+downloads:
+  max-size-mib: 100
+  timeout-seconds: 120
+  # True blocks providers/assets with no supported checksum (including most Spigot files).
+  require-checksum: false
 # Manual entries need only the exact JAR filename and source link.
 updates: []
 # updates:

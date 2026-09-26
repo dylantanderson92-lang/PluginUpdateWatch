@@ -39,7 +39,7 @@ final class Modrinth {
         for (JsonElement element : latest.getAsJsonArray("files")) {
             JsonObject file = element.getAsJsonObject();
             String name = file.get("filename").getAsString();
-            if (!name.toLowerCase(Locale.ROOT).endsWith(".jar") || !pattern.matcher(name).matches()) continue;
+            if (!Discovery.validFilename(name) || !pattern.matcher(name).matches()) continue;
             files.add(file);
             if (file.has("primary") && file.get("primary").getAsBoolean()) primary.add(file);
         }

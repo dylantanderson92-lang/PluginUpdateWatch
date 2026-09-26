@@ -11,6 +11,9 @@ record SourceLink(String type, String id, String asset) {
                 || (uri.getPort() != -1 && uri.getPort() != 443))
             throw new IllegalArgumentException("Use an HTTPS Modrinth, Spigot or GitHub project link");
         String host = uri.getHost().toLowerCase(Locale.ROOT);
+        if (uri.getRawPath().contains("%") || uri.getPath().contains("\\") || uri.getPath().contains("//")
+                || java.util.Arrays.stream(uri.getPath().split("/")).anyMatch(p -> p.equals(".") || p.equals("..")))
+            throw new IllegalArgumentException("Source paths must not contain encoded or relative segments");
         String[] parts = uri.getPath().split("/");
         if ((host.equals("modrinth.com") || host.equals("www.modrinth.com")) && parts.length >= 3
                 && (parts[1].equals("plugin") || parts[1].equals("mod") || parts[1].equals("project"))
@@ -21,6 +24,9 @@ record SourceLink(String type, String id, String asset) {
         }
         if (host.equals("github.com") && parts.length >= 3 && parts[1].matches("[A-Za-z0-9_.-]+") && parts[2].matches("[A-Za-z0-9_.-]+")) {
             String repository = parts[2].replaceFirst("\\.git$", "");
+            if (repository.isBlank() || !parts[1].matches("[A-Za-z0-9][A-Za-z0-9-]*")) throw new IllegalArgumentException("Invalid GitHub repository");
+            if (parts.length >= 7 && parts[3].equals("releases") && parts[4].equals("download") && !Discovery.validFilename(parts[parts.length - 1]))
+                throw new IllegalArgumentException("GitHub asset link must name a valid JAR");
             String asset = parts.length >= 7 && parts[3].equals("releases") && parts[4].equals("download")
                     ? Pattern.quote(parts[parts.length - 1]) : ".*\\.jar";
             return new SourceLink("github", parts[1] + "/" + repository, asset);

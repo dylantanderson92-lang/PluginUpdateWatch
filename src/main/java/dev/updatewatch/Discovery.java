@@ -31,7 +31,9 @@ final class Discovery {
                 byte[] bytes = in.readNBytes(65537);
                 if (bytes.length > 65536) throw new IOException("Descriptor too large");
                 YamlConfiguration yaml = new YamlConfiguration(); yaml.loadFromString(new String(bytes, StandardCharsets.UTF_8));
-                return new Jar(path, yaml.getString("name", ""), yaml.getString("version", ""));
+                String name = yaml.getString("name", ""), version = yaml.getString("version", "");
+                if (name.isBlank() || version.isBlank() || yaml.getString("main", "").isBlank()) throw new IOException("Incomplete plugin descriptor");
+                return new Jar(path, name, version);
             }
         }
     }
@@ -67,7 +69,8 @@ final class Discovery {
         catch (Remote.HttpError e) { if (e.code == 404) return null; throw e; }
     }
     static boolean validFilename(String name) {
-        return !name.isBlank() && !name.contains("/") && !name.contains("\\") && !name.contains(":")
-                && name.toLowerCase(Locale.ROOT).endsWith(".jar");
+        return name != null && name.length() <= 240 && !name.isBlank() && !name.matches(".*[\\\\/:*?\"<>|\\p{Cntrl}].*")
+                && !name.matches("(?i)(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])\\..*")
+                && !name.startsWith(".") && name.toLowerCase(Locale.ROOT).endsWith(".jar");
     }
 }

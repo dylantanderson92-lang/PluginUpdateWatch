@@ -9,31 +9,53 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import java.util.*;
+import dev.updatewatch.UpdateCheckService.Result;
 import java.util.concurrent.*;
 
 public final class UpdateWatch extends JavaPlugin implements Listener, TabCompleter {
-    private record Result(Remote.Source source, Remote.Release release, Versions.Status status, String error) {}
-    private final Map<String, Result> results = new LinkedHashMap<>();
+    // Mutable state below is owned exclusively by the server thread.
+    private Map<String, Result> results = Map.of();
+    private final CheckState checkState = new CheckState();
+    private UpdateCheckService.Report lastReport;
+    private Settings settings;
+    private boolean requireChecksum;
+    private String loadedConfig;
     private final Set<String> downloads = new HashSet<>();
     private ExecutorService worker;
     private BukkitTask timer;
-    private boolean checking;
-    private int generation;
     private Map<String, String> discoveryNotes = Map.of();
 
     @Override public void onEnable() {
         saveDefaultConfig();
+        var compatibility = Compatibility.classify(getServer().getMinecraftVersion());
+        if (compatibility == Compatibility.Status.BELOW_MINIMUM) {
+            getLogger().severe("Requires Paper 1.21.11 or newer."); getServer().getPluginManager().disablePlugin(this); return;
+        }
+        if (compatibility == Compatibility.Status.UNVERIFIED) getLogger().warning("This Minecraft version is outside the targeted 1.21.11–26.3 range; compatibility is unverified.");
+        try { loadSettings(); } catch (Exception e) {
+            getLogger().severe("Invalid config: " + e.getMessage()); getServer().getPluginManager().disablePlugin(this); return;
+        }
         worker = Executors.newSingleThreadExecutor(r -> { Thread t = new Thread(r, "PluginUpdateWatch-IO"); t.setDaemon(true); return t; });
         getServer().getPluginManager().registerEvents(this, this);
         Objects.requireNonNull(getCommand("pluginupdates")).setTabCompleter(this);
         schedule();
     }
-    @Override public void onDisable() { generation++; if (worker != null) worker.shutdownNow(); }
+    @Override public void onDisable() { checkState.invalidate(); if (worker != null) worker.shutdownNow(); }
+    private void loadSettings() throws Exception {
+        String contents = java.nio.file.Files.readString(getDataFolder().toPath().resolve("config.yml"));
+        var parsed = ConfigManager.parse(contents);
+        var loaded = Settings.parse(parsed, getDataFolder().toPath().toAbsolutePath().getParent());
+        reloadConfig(); settings = loaded;
+        requireChecksum = parsed.getBoolean("downloads.require-checksum", false);
+        loadedConfig = contents;
+    }
     private void schedule() {
         if (timer != null) timer.cancel();
         long minutes = Math.clamp(getConfig().getLong("check-interval-minutes", 360), 15, 10080);
-        boolean[] first = {true};
-        timer = getServer().getScheduler().runTaskTimer(this, () -> { check(null, first[0]); first[0] = false; }, 100, minutes * 1200);
+        checkState.requestScan();
+        timer = getServer().getScheduler().runTaskTimer(this, () -> {
+            if (!checkState.running()) check(null, checkState.takePendingScan());
+        }, 100, minutes * 1200);
     }
     private void sync(Runnable action) {
         if (isEnabled()) {
@@ -44,7 +66,8 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         sender.sendMessage(Component.text("[Updates] ", NamedTextColor.AQUA).append(Component.text(message, NamedTextColor.GRAY)));
     }
     private void check(CommandSender sender, boolean scan) {
-        if (checking) { if (sender != null) tell(sender, "A check is already running."); return; }
+        if (!getServer().isPrimaryThread()) throw new IllegalStateException("Check state must be accessed on the server thread");
+        if (checkState.running()) { if (sender != null) tell(sender, "A check is already running."); return; }
         var installed = Arrays.stream(getServer().getPluginManager().getPlugins()).filter(p -> p != this)
                 .map(p -> new Discovery.Installed(p.getName(), p.getPluginMeta().getVersion(), p.getPluginMeta().getWebsite())).toList();
         String snapshot = getConfig().saveToString();
@@ -52,55 +75,64 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         String diskSnapshot;
         try { diskSnapshot = java.nio.file.Files.readString(configFile); }
         catch (Exception e) { tell(sender == null ? getServer().getConsoleSender() : sender, "Cannot read config.yml: " + e.getMessage()); return; }
+        if (!diskSnapshot.equals(loadedConfig)) {
+            tell(sender == null ? getServer().getConsoleSender() : sender, "Config changed on disk. Run /pu reload before checking or scanning."); return;
+        }
         String minecraft = getServer().getMinecraftVersion();
-        var pluginsFolder = getDataFolder().toPath().getParent();
-        checking = true;
-        int epoch = generation;
+        Settings checkSettings = settings;
+        long epoch = checkState.begin();
         if (sender != null) tell(sender, scan ? "Scanning installed JARs and checking update sources..." : "Checking configured plugins...");
         worker.execute(() -> {
-            ConfigSources.Resolution resolution;
+            UpdateCheckService.Report report;
             try {
-                var config = new org.bukkit.configuration.file.YamlConfiguration(); config.loadFromString(snapshot);
-                resolution = ConfigSources.resolve(config, installed, Discovery.inventory(pluginsFolder), minecraft, scan, Discovery::modrinthProject);
+                // Parse the file itself so invalid YAML can never be replaced by default values.
+                report = UpdateCheckService.check(diskSnapshot, installed, minecraft, scan, checkSettings);
             } catch (Exception e) {
-                sync(() -> { checking = false; if (epoch == generation) tell(sender == null ? getServer().getConsoleSender() : sender, "Scan/check failed: " + e.getMessage()); });
+                sync(() -> {
+                    if (checkState.finish(epoch)) {
+                        tell(sender == null ? getServer().getConsoleSender() : sender, "Scan/check failed: " + UpdateCheckService.message(e));
+                        getLogger().warning("Scan/check failed: " + UpdateCheckService.message(e));
+                    }
+                    resumePendingScan();
+                });
                 return;
             }
-            Map<String, Result> checked = new LinkedHashMap<>();
-            for (var source : resolution.sources()) {
-                if (Thread.currentThread().isInterrupted()) break;
-                Result result;
-                try {
-                    var release = Remote.latest(source);
-                    result = new Result(source, release, Versions.compare(source.installed(), release.version()), null);
-                } catch (Exception e) { result = new Result(source, null, null, e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()); }
-                checked.put(source.name().toLowerCase(Locale.ROOT), result);
-            }
+            var resolution = report.resolution();
+            var checked = report.results();
             sync(() -> {
-                checking = false;
-                if (epoch != generation) return;
+                if (!checkState.finish(epoch)) { resumePendingScan(); return; }
                 try {
                     if (!snapshot.equals(getConfig().saveToString()) || !diskSnapshot.equals(java.nio.file.Files.readString(configFile))) {
                         tell(sender == null ? getServer().getConsoleSender() : sender, "Config changed during scan; results discarded. Run /pu reload."); return;
                     }
                     if (scan && !resolution.entries().equals(getConfig().getMapList("updates"))) {
-                        getConfig().set("updates", resolution.entries());
-                        getConfig().save(configFile.toFile());
+                        var updated = ConfigManager.parse(diskSnapshot);
+                        updated.set("updates", resolution.entries());
+                        ConfigManager.save(configFile, diskSnapshot, updated.saveToString());
+                        loadedConfig = updated.saveToString();
+                        reloadConfig();
                     }
                 } catch (Exception e) { tell(sender == null ? getServer().getConsoleSender() : sender, "Could not save discovery config: " + e.getMessage()); return; }
                 boolean changed = !checked.equals(results);
                 changed |= !discoveryNotes.equals(resolution.notes());
                 discoveryNotes = resolution.notes();
-                results.clear(); results.putAll(checked);
+                results = checked; lastReport = report;
+                for (var result : results.values()) if (result.error() != null) getLogger().warning(result.source().name() + ": " + result.error());
+                if (checkSettings.debug()) getLogger().info("Check completed in " + report.durationMillis() + " ms; " + report.counts() + "; updates=" + updateCount());
                 if (sender != null) show(sender);
                 if (changed) {
                     show(getServer().getConsoleSender());
                     if (hasUpdates()) for (var player : getServer().getOnlinePlayers())
                         if (player.hasPermission("pluginupdatewatch.admin") && player != sender) tell(player, "Plugin updates are available. Use /pu list.");
                 }
+                resumePendingScan();
             });
         });
     }
+    private void resumePendingScan() {
+        if (checkState.takePendingScan()) check(null, true);
+    }
+    private long updateCount() { return results.values().stream().filter(r -> r.error() == null && r.status() == Versions.Status.UPDATE).count(); }
     private boolean hasUpdates() { return results.values().stream().anyMatch(r -> r.error() == null && r.status() != Versions.Status.CURRENT); }
     @EventHandler public void onJoin(PlayerJoinEvent event) {
         if (getConfig().getBoolean("notify-on-join", true) && event.getPlayer().hasPermission("pluginupdatewatch.admin") && hasUpdates())
@@ -136,10 +168,14 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         }
         if (!downloads.add(key)) { tell(sender, "That download is already running."); return; }
         tell(sender, "Downloading " + r.source().name() + " " + r.release().version() + "...");
+        Settings downloadSettings = settings;
+        boolean checksumRequired = requireChecksum;
+        var downloadFolder = getDataFolder().toPath().resolve("downloads");
+        if (!r.release().hasChecksum()) tell(sender, r.source().type() + " provides no checksum for this file. HTTPS and JAR structure will be checked; publisher authenticity cannot be verified.");
         worker.execute(() -> {
             String message;
             try {
-                var path = Remote.download(r.source(), r.release(), getDataFolder().toPath().resolve("downloads"));
+                var path = Remote.download(r.source(), r.release(), downloadFolder, downloadSettings, checksumRequired);
                 message = "Saved " + path + ". Stop the server, replace the old plugin JAR, then restart. Check the release's Minecraft compatibility first.";
             } catch (Exception e) { message = "Download failed: " + e.getMessage(); }
             String finalMessage = message;
@@ -154,14 +190,23 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             case "check" -> check(sender, false);
             case "scan" -> check(sender, true);
             case "download" -> { if (args.length == 2) download(sender, args[1]); else tell(sender, "Usage: /pu download <plugin>"); }
-            case "reload" -> { reloadConfig(); generation++; results.clear(); discoveryNotes = Map.of(); schedule(); tell(sender, "Configuration reloaded. Automatic scan will run shortly."); }
-            default -> tell(sender, "Usage: /pu [list|scan|check|download <plugin>|reload]");
+            case "stats" -> {
+                if (lastReport == null) tell(sender, "No completed check yet.");
+                else tell(sender, "Last check: " + lastReport.durationMillis() + " ms; updates: " + updateCount() + "; provider success/failure: " + lastReport.counts());
+            }
+            case "reload" -> {
+                try {
+                    loadSettings(); checkState.invalidate(); results = Map.of(); discoveryNotes = Map.of(); lastReport = null;
+                    schedule(); tell(sender, "Configuration reloaded. Automatic scan will run shortly.");
+                } catch (Exception e) { tell(sender, "Reload rejected; previous settings retained: " + e.getMessage()); }
+            }
+            default -> tell(sender, "Usage: /pu [list|scan|check|download <plugin>|stats|reload]");
         }
         return true;
     }
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission("pluginupdatewatch.admin")) return List.of();
-        List<String> choices = args.length == 1 ? List.of("list", "scan", "check", "download", "reload")
+        List<String> choices = args.length == 1 ? List.of("list", "scan", "check", "download", "stats", "reload")
                 : args.length == 2 && args[0].equalsIgnoreCase("download") ? results.values().stream()
                 .filter(r -> r.error() == null && r.status() != Versions.Status.CURRENT && r.release().download() != null).map(r -> r.source().name()).toList() : List.of();
         String prefix = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);

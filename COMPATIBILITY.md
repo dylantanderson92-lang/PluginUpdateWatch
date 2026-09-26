@@ -1,3 +1,13 @@
+# 1.3.0 compatibility policy
+
+The target remains Paper 1.21.11–26.3. `plugin.yml` declares **the minimum API version**, deliberately `1.21.11`; it is not an upper bound. Paper performs its own API compatibility check before enabling the plugin. `Compatibility.java` also classifies server versions at startup: known versions below the floor are rejected, and versions outside the target receive a warning instead of a speculative upper-version rejection. No claim is made for Folia or standalone Spigot.
+
+The maintenance source was compiled locally against Paper `1.21.11-R0.1-SNAPSHOT` and cached `26.3.build.6-alpha`. Local tests run on Java 21 and Java 25 respectively. These checks do not simulate a live Paper server. Intermediate releases and every 26.3 build are not individually tested. CI builds against the declared 1.21.11 API on both Java runtimes.
+
+Before production use, test startup, scan, reload during a scan, and download on a server copy. Confirm the provider lists the correct target plugin and, for Modrinth, a release explicitly tagged for your Minecraft version. GitHub/Spigot checks still require manual review of the publisher's server compatibility notes.
+
+Historical verification follows; it is not a claim that newer source has been live-tested.
+
 # 1.2.0 verification update
 
 All updated source compiled against Paper 1.21.11 and the cached 26.3 build 6 alpha API. The 24 local tests passed on Java 25. The new discovery flow has not been tested on a live server. The evidence below describes 1.1.0 and does not extend its runtime verification to 1.2.0.

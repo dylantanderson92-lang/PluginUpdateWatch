@@ -18,3 +18,16 @@ updates:
 After editing config, run `/pu reload`. Updates download to `plugins/PluginUpdateWatch/downloads/`; install them during a restart.
 
 Local validation: 24 automated tests passed. Paper 1.21.11–26.3 remains the intended range; see COMPATIBILITY.md for exact API checks and limits. Live discovery on an actual Paper server has not been verified.
+# 1.3.0 maintenance candidate
+
+- Add PR/main CI on Java 21 and 25, development artifacts, and tag-triggered releases using the exact verified JAR and checksum with generated release notes.
+- Extract check service, lifecycle state, config persistence, provider selection, HTTP transport and download/archive validation.
+- Keep plugin state on the server thread; reject stale results after reload and queue a replacement scan.
+- Validate config rows, filenames, repository IDs and source paths before use; preserve invalid/edited config files.
+- Add configurable connect/read/request/download limits and plugin directory, bounded retries, rate-limit handling, redirect allowlist and failure logging.
+- Verify GitHub API SHA-256 digests and Modrinth SHA-512; add an optional checksum-required policy.
+- Validate archive CRCs, entry paths and size limits, descriptor identity/version and main class presence before accepting downloads.
+- Add local `/pu stats` and debug scan summaries.
+- Document the API floor separately from the targeted runtime range. Retain Paper 1.21.11 minimum API.
+
+Existing configs use defaults for the new settings. Downloads still require a deliberate command and manual installation after stopping the server. Download filenames now begin with `plugin-` and include a collision-resistant suffix. Unsupported external download hosts require manual download.

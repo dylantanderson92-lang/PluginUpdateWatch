@@ -1,0 +1,60 @@
+package dev.updatewatch;
+
+import com.google.gson.*;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Pattern;
+
+final class Providers {
+    interface JsonFetch { JsonElement get(String url) throws IOException; }
+    static Remote.Release latest(Remote.Source s, JsonFetch fetch) throws IOException {
+        try {
+            validate(s);
+            return switch (s.type().toLowerCase(Locale.ROOT)) {
+                case "modrinth" -> Modrinth.select(fetch.get(Modrinth.url(s)).getAsJsonArray(), s);
+                case "github" -> github(s, fetch.get("https://api.github.com/repos/" + s.id() + "/releases/latest").getAsJsonObject());
+                case "spigot" -> spigot(s, fetch);
+                default -> throw new IOException("Unknown provider");
+            };
+        } catch (Remote.HttpError e) { throw e; }
+        catch (RuntimeException e) { throw new IOException(s.type() + ": invalid configuration or malformed API response (" + e.getClass().getSimpleName() + ")", e); }
+    }
+    static void validate(Remote.Source s) {
+        boolean valid = switch (s.type().toLowerCase(Locale.ROOT)) {
+            case "github" -> s.id().matches("[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+") && !s.id().endsWith("/.") && !s.id().endsWith("/..");
+            case "modrinth" -> s.id().matches("[A-Za-z0-9_-]+");
+            case "spigot" -> s.id().matches("[1-9][0-9]*");
+            default -> false;
+        };
+        if (!valid) throw new IllegalArgumentException("Invalid " + s.type() + " source ID");
+        Pattern.compile(s.asset());
+    }
+    private static Remote.Release github(Remote.Source s, JsonObject v) throws IOException {
+        Pattern pattern = Pattern.compile(s.asset()); List<JsonObject> matches = new ArrayList<>();
+        for (JsonElement e : v.getAsJsonArray("assets")) {
+            JsonObject a = e.getAsJsonObject(); String name = a.get("name").getAsString();
+            if (Discovery.validFilename(name) && pattern.matcher(name).matches()) matches.add(a);
+        }
+        String download = null, sha256 = null;
+        if (matches.size() == 1) {
+            JsonObject a = matches.getFirst(); download = a.get("browser_download_url").getAsString();
+            HttpTransport.safeUri(download);
+            if (a.has("digest") && !a.get("digest").isJsonNull()) {
+                String digest = a.get("digest").getAsString();
+                if (!digest.matches("sha256:[a-fA-F0-9]{64}")) throw new IOException("GitHub asset has an unsupported or malformed digest");
+                sha256 = digest.substring(7);
+            }
+        }
+        String version = v.get("tag_name").getAsString();
+        if (version.isBlank()) throw new IOException("GitHub release has an empty version");
+        return new Remote.Release(version, download, "https://github.com/" + s.id() + "/releases/latest", null, sha256);
+    }
+    private static Remote.Release spigot(Remote.Source s, JsonFetch fetch) throws IOException {
+        String base = "https://api.spiget.org/v2/resources/" + s.id();
+        JsonObject info = fetch.get(base).getAsJsonObject(), version = fetch.get(base + "/versions/latest").getAsJsonObject();
+        boolean blocked = (info.has("premium") && info.get("premium").getAsBoolean()) || (info.has("external") && info.get("external").getAsBoolean());
+        String name = version.get("name").getAsString(); long id = version.get("id").getAsLong();
+        if (name.isBlank() || id <= 0) throw new IOException("Spigot response has no valid release version");
+        return new Remote.Release(name, blocked ? null : base + "/versions/" + id + "/download", "https://www.spigotmc.org/resources/" + s.id() + "/");
+    }
+}
