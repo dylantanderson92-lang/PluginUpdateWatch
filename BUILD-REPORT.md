@@ -1,4 +1,4 @@
-# Build verification — published 1.3.0 and unreleased follow-up
+# Build verification — 1.3.1 and historical 1.3.0
 
 Checked 27 September 2026 (Pacific/Auckland).
 
@@ -16,18 +16,18 @@ Published JAR SHA-256:
 040847286752850f842df9966563742ebe3c5a36bcf10146c937a5f31516ae18
 ```
 
-## Unreleased follow-up
+## 1.3.1
 
-This branch adds a safeguard for JAR filenames that differ only by case. It blocks ambiguous source selection across manual entries, discovery and legacy fallback, and adds three regression tests. These changes are not present in the published 1.3.0 JAR. The project version remains 1.3.0 until a future release is prepared.
+Version 1.3.1 adds a safeguard for JAR filenames that differ only by case. It blocks ambiguous source selection across manual entries, discovery and legacy fallback, and adds three regression tests. These changes are not present in the published 1.3.0 JAR.
 
 - Standard Maven `clean verify` passed locally using JDK 21.0.12: **75 tests, 0 failures, 0 errors, 0 skipped**, followed by JAR packaging and Gson shading.
-- The locally packaged follow-up JAR passed live startup, scan/check/list/reload, real Modrinth downloads with independently verified SHA-512, and missing-checksum rejection on Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25. Both isolated servers stopped cleanly.
+- The final locally packaged 1.3.1 JAR passed live startup, scan/check/list/reload, real Modrinth downloads with independently verified SHA-512, and missing-checksum rejection on Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25. Both isolated servers stopped cleanly with exit status 0; see [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) for artifact evidence.
 - The normal Maven dependency remains Paper `1.21.11-R0.1-SNAPSHOT`. CI is configured to run `mvn clean verify` with this dependency on Java 21 and 25.
 - All prior tests remain in the suite. Local HTTP tests inject deterministic responses and waits to cover failures without depending on remote rate limits or outages.
 
 ## Test coverage
 
-| Test class | Published 1.3.0 | Unreleased follow-up | Coverage |
+| Test class | Published 1.3.0 | 1.3.1 | Coverage |
 | --- | ---: | ---: | --- |
 | CheckStateTest | 2 | 2 | Reload invalidation, no overlapping checks, queued scans |
 | DiscoveryTest | 15 | 18 | Configuration round trips, legacy sources, normalized matches, duplicate JAR ambiguity, mismatches, orphan files and invalid descriptors; follow-up adds case-colliding filenames across explicit/discovered/legacy sources |

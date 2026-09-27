@@ -1,10 +1,15 @@
-# Unreleased
+# PluginUpdateWatch 1.3.1
+
+Download **PluginUpdateWatch-1.3.1.jar** from Assets. Stop the server, replace the older PluginUpdateWatch JAR, keep its configuration folder, then restart.
 
 - Block source selection for on-disk filenames that differ only by case, such as `Alpha.jar` and `alpha.jar` on Linux. Manual entries, automatic discovery and legacy fallback all report the conflicting files in `/pu list` and retain the config rows for correction.
-- Add three discovery regression tests, bringing the local suite from 72 to **75 tests**, all passing with Maven `clean verify` on Java 21.
-- Verify the locally packaged follow-up on Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25, including real Modrinth downloads and missing-checksum rejection.
+- Add three discovery regression tests, bringing the suite from 72 to **75 tests**.
+- Update download links and record live Paper verification with artifact checksums.
+- Publish the exact verified Java 21 artifact after Java 21/25 checks, using an explicit release marker or a matching tag, with curated notes and a generated changelog.
 
-These changes are not included in the published 1.3.0 JAR. The project version remains 1.3.0 until a future release is prepared. See [BUILD-REPORT.md](BUILD-REPORT.md) and [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) for separate release and follow-up evidence.
+Existing configuration remains compatible; no migration is required from 1.3.0. Modrinth, GitHub and Spigot update checks remain supported. Provider checksums are still required for downloads by default; an explicit `downloads.require-checksum: false` permits missing checksums with warnings, but never bypasses a supplied mismatched checksum.
+
+Validation: local Maven `clean verify` passed all **75 tests** with zero failures, errors or skipped tests. The final local 1.3.1 JAR passed live startup, scan/check/list/reload, a real Modrinth update download with independent SHA-512 verification, and missing-checksum rejection on **Paper 1.21.11 build 132 / Java 21** and **Paper 26.3 build 41 alpha / Java 25**. See [the build report](https://github.com/dylantanderson92-lang/PluginUpdateWatch/blob/main/BUILD-REPORT.md) and [live test report](https://github.com/dylantanderson92-lang/PluginUpdateWatch/blob/main/LIVE-TEST-REPORT.md) for exact scope and artifact evidence. The 26.3 build tested is an alpha; not every intermediate Paper build has been tested.
 
 ---
 

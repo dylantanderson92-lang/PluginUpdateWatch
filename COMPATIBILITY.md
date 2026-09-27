@@ -8,13 +8,13 @@ The plugin uses Java 21 bytecode. Run the Java version required by your Paper bu
 
 The [published release](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.3.0) passed all **72 tests** in Maven CI on both Java 21 and Java 25, using the declared `1.21.11-R0.1-SNAPSHOT` API. Its source also compiled locally against cached `26.3.build.6-alpha`, with local tests passing on Java 25. That alternate API check applies to the cached build, not every 26.3 build.
 
-The exact published JAR passed live startup, `pu scan`, `pu check`, `pu list`, `pu reload`, a real Modrinth download with independent SHA-512 verification, and rejection of a download without a checksum on Paper **1.21.11 build 132 / Java 21.0.12** and **26.3 build 41 alpha / Java 25.0.4.1**. Both test servers stopped cleanly with exit status 0. [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) separates the published artifact from the locally built follow-up.
+The exact published JAR passed live startup, `pu scan`, `pu check`, `pu list`, `pu reload`, a real Modrinth download with independent SHA-512 verification, and rejection of a download without a checksum on Paper **1.21.11 build 132 / Java 21.0.12** and **26.3 build 41 alpha / Java 25.0.4.1**. Both test servers stopped cleanly with exit status 0. [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) identifies the exact artifacts tested for each version.
 
-## Unreleased follow-up
+## 1.3.1
 
-The follow-up adds protection against JAR filenames that differ only by case and three regression tests. Local Maven verification passed **75 tests**. This source retains the 1.3.0 version for now, but the additional fix is not in the published 1.3.0 JAR.
+Version 1.3.1 adds protection against JAR filenames that differ only by case and three regression tests. Local Maven verification passed **75 tests**. The minimum API and intended runtime range remain unchanged from 1.3.0.
 
-The local follow-up JAR passed live startup, `pu scan`, `pu check`, `pu list`, `pu reload`, a real Modrinth update download with independent SHA-512 verification, and rejection of a Spigot download without a checksum on both Paper versions above. Both isolated test servers shut down successfully. These results are specific to the local artifact identified in the live report.
+The final local 1.3.1 JAR passed live startup, `pu scan`, `pu check`, `pu list`, `pu reload`, a real Modrinth download with independent SHA-512 verification, and rejection of a Spigot download without a checksum on both Paper builds above. Both isolated test servers shut down with exit status 0. [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) identifies the exact tested artifact and verification scope.
 
 ## Verification scope
 
