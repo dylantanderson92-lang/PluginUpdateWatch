@@ -117,4 +117,37 @@ class DiscoveryTest {
         var result = ConfigSources.resolve(y, List.of(plugin), Discovery.inspect(temp), "26.3", true, h -> { fail(); return null; });
         assertEquals(1, result.sources().size()); assertTrue(result.notes().get("Example").contains("Ambiguous"));
     }
+    @Test void collidingFilenamesCannotReuseAManualSourceAcrossPlugins() {
+        var installed = List.of(new Discovery.Installed("Alpha", "1.0", null), new Discovery.Installed("Beta", "1.0", null));
+        var jars = List.of(new Discovery.Jar(temp.resolve("Alpha.jar"), "Alpha", "1.0"), new Discovery.Jar(temp.resolve("alpha.jar"), "Beta", "1.0"));
+        var rows = List.of(Map.of("jar", "Alpha.jar", "source", "https://modrinth.com/plugin/alpha"));
+        var config = new YamlConfiguration(); config.set("updates", rows);
+        for (boolean scan : List.of(false, true)) {
+            var result = ConfigSources.resolve(config, installed, jars, "26.3", scan, h -> { fail("Colliding files must not be discovered"); return null; });
+            assertTrue(result.sources().isEmpty()); assertEquals(rows, result.entries()); assertEquals(rows, config.getMapList("updates"));
+            for (String name : List.of("Alpha", "Beta")) {
+                String note = result.notes().get(name);
+                assertTrue(note.contains("case-insensitive collision")); assertTrue(note.contains("Alpha.jar")); assertTrue(note.contains("alpha.jar"));
+            }
+        }
+    }
+    @Test void collidingFilenamesCannotCreateOrShareDiscoveredEntries() {
+        var installed = List.of(new Discovery.Installed("Alpha", "1.0", null), new Discovery.Installed("Beta", "1.0", null));
+        var jars = List.of(new Discovery.Jar(temp.resolve("Alpha.jar"), "Alpha", "1.0"), new Discovery.Jar(temp.resolve("alpha.jar"), "Beta", "1.0"));
+        var rows = List.of(Map.of("jar", "old.jar", "source", "https://modrinth.com/plugin/old"));
+        var config = new YamlConfiguration(); config.set("updates", rows);
+        var result = ConfigSources.resolve(config, installed, jars, "26.3", true, h -> { fail("Colliding files must not be hashed"); return null; });
+        assertTrue(result.sources().isEmpty()); assertEquals(rows, result.entries()); assertEquals(rows, config.getMapList("updates"));
+        assertTrue(result.notes().get("Alpha").contains("case-insensitive collision"));
+        assertTrue(result.notes().get("Beta").contains("case-insensitive collision"));
+    }
+    @Test void collidingFilenamesWithIdenticalMetadataAlsoBlockLegacyFallback() {
+        var jars = List.of(new Discovery.Jar(temp.resolve("Alpha.jar"), "Example", "1.0"), new Discovery.Jar(temp.resolve("alpha.jar"), "Example", "1.0"));
+        var config = new YamlConfiguration(); config.set("plugins.Example.source", "modrinth"); config.set("plugins.Example.project", "example");
+        var result = ConfigSources.resolve(config, List.of(plugin), jars, "26.3", true, h -> { fail(); return null; });
+        assertTrue(result.sources().isEmpty()); assertTrue(result.entries().isEmpty());
+        assertTrue(result.notes().get("Example").contains("case-insensitive collision"));
+        assertTrue(result.notes().get("JAR filenames: alpha.jar").contains("no source was selected"));
+        assertEquals("example", config.getString("plugins.Example.project"));
+    }
 }

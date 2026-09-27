@@ -2,12 +2,12 @@
 
 Detect installed Paper plugins, find update sources, notify admins, and download updates on request. Supports **Modrinth, Spigot and GitHub**.
 
-**[Download from Releases](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/latest)** — choose `PluginUpdateWatch-1.2.0.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation. You will be able to download from Modrinth shortly
+**[Download PluginUpdateWatch 1.3.1](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.3.1)** — choose `PluginUpdateWatch-1.3.1.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation.
 
 ## Install or upgrade
 
 1. Stop the server.
-2. Put `PluginUpdateWatch-1.2.0.jar` into the server's `plugins` folder. Remove the older PluginUpdateWatch JAR if upgrading. Keep its existing configuration folder.
+2. Put `PluginUpdateWatch-1.3.1.jar` into the server's `plugins` folder. Remove the older PluginUpdateWatch JAR if upgrading. Keep its existing configuration folder.
 3. Start the server. A scan begins automatically after startup.
 4. Run `/pu list` as an operator to see updates or plugins needing a source link.
 
@@ -18,6 +18,8 @@ The scanner reads original JARs directly in the server's plugins folder and matc
 Detected sources are saved automatically. Unresolved plugins receive an entry with the correct filename and a blank source, plus a message in `/pu list`. The scanner never selects projects by similar names. Duplicate matching JARs are reported rather than guessed. PluginUpdateWatch excludes itself.
 
 Names are trimmed and compared without case sensitivity; versions only have surrounding whitespace trimmed. Original metadata remains unchanged. Versions such as `1.0`, `01.0` and `1.0-beta` remain distinct. `/pu list` and console warnings identify duplicate candidate filenames, installed/JAR version mismatches, JARs with no matching installed plugin, and unreadable or incomplete descriptors. Discovery never picks one of several matching JARs. Existing explicit legacy sources can still be checked while such a warning is shown. Symbolic links are reported and skipped during directory scanning.
+
+Filenames that differ only by case (for example `Alpha.jar` and `alpha.jar` on Linux) are also ambiguous. Both files are skipped, including legacy fallback, until the collision is resolved. `/pu list` identifies the filenames to rename or remove; the config rows are retained. This safeguard was added in 1.3.1.
 
 Existing links and legacy settings are preserved. If the config changes during a scan, results are discarded so edits are not overwritten. Saving can reformat YAML comments; existing setting values are retained.
 
@@ -118,13 +120,15 @@ Targets Paper **1.21.11–26.3**, using Java 21 bytecode and no server internals
 | Target Paper 1.21.11–26.3 | Intended runtime range; intermediate builds are not all individually tested |
 | Paper 1.21.11 API + Java 21 | Source compilation and local unit tests |
 | Cached Paper 26.3 build 6 alpha API + Java 25 | Source compilation and local unit tests against this specific API build |
-| Live Paper startup, commands and remote downloads for 1.3.0 | Not yet verified; test on a server copy before production use |
+| Published 1.3.0, Java 21 and 25 CI | 72 tests passed; see [the CI run](https://github.com/dylantanderson92-lang/PluginUpdateWatch/actions/runs/36248215330) |
+| Published 1.3.0 JAR, live Paper 1.21.11 build 132 / Java 21 and 26.3 build 41 alpha / Java 25 | Startup, scan/check/list/reload, real Modrinth download and missing-checksum rejection passed with the exact GitHub Release JAR; see [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) |
+| 1.3.1 verification | 75 local tests passed; the final local JAR passed startup, scan/check/list/reload, a real Modrinth download and missing-checksum rejection on both Paper builds above. See [BUILD-REPORT.md](BUILD-REPORT.md) and [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) |
 
 Existing jar/source and legacy `plugins:` entries remain valid without migration. The deliberate safety change is that an **omitted** checksum setting now requires checksums; administrators wanting the earlier permissive behavior must explicitly opt out as described above. No config values are silently rewritten to opt out.
 
-Build this branch with JDK 21+ and Maven 3.9+: `mvn clean verify`. Install `target/PluginUpdateWatch-1.3.0.jar`, not the `original-` JAR. Gson is bundled and relocated. The latest published release remains the version shown under Releases until a new tag is published.
+Build with JDK 21+ and Maven 3.9+: `mvn clean verify`. The installable local artifact is `target/PluginUpdateWatch-1.3.1.jar`. Gson is bundled and relocated; do not install the `original-` JAR.
 
-Pull requests and main pushes build/test on Java 21 and 25. Actions stores the Java 21 JAR/checksum as the `plugin-java-21` artifact for 14 days, including development builds on main. To release, set matching versions in `pom.xml` and `plugin.yml`, merge the verified change, then push a tag such as `v1.3.0`. The tag workflow runs the same checks, verifies the tag/version/checksum, and publishes that run's exact Java 21 artifact with automatically generated release notes. It never uses the older committed `downloads/` binaries and does not overwrite an existing release. Manual workflow runs on branches verify only; they do not publish a release.
+Pull requests and main pushes build/test on Java 21 and 25. Actions stores the Java 21 JAR/checksum as the `plugin-java-21` artifact for 14 days, including development builds on main. To prepare a release, set matching versions in `pom.xml`, `plugin.yml` and `.github/release-version`, update the release notes, and complete live verification before merging the reviewed release PR. A main-branch push that changes `.github/release-version` runs both Java builds, verifies the artifact/version/checksum, creates the matching `v*` tag, and publishes that run's exact Java 21 artifact. Pushing a matching `v*` tag remains supported. Ordinary main pushes do not publish releases. Release notes include the curated notes and GitHub's generated changelog. The workflow never uses the older committed `downloads/` binaries and does not overwrite an existing release. Manual workflow runs on branches verify only; they do not publish a release.
 
 ## License
 

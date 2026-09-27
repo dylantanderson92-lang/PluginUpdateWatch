@@ -28,6 +28,18 @@ final class ConfigSources {
                         + "; check for an old, disabled or renamed plugin JAR and review server startup logs");
         }
         Set<String> invalid = new HashSet<>(), seen = new HashSet<>();
+        Map<String, List<Discovery.Jar>> filenameGroups = new LinkedHashMap<>();
+        for (var jar : jars) filenameGroups.computeIfAbsent(jar.path().getFileName().toString().toLowerCase(Locale.ROOT), key -> new ArrayList<>()).add(jar);
+        Map<String, String> filenameCollisions = new LinkedHashMap<>();
+        for (var group : filenameGroups.entrySet()) {
+            if (group.getValue().size() < 2) continue;
+            String candidates = String.join(", ", group.getValue().stream().map(j -> j.path().getFileName().toString()).sorted().toList());
+            String note = "Ambiguous JAR filenames (case-insensitive collision): " + candidates
+                    + "; rename or remove colliding files before checking (no source was selected)";
+            filenameCollisions.put(group.getKey(), note);
+            invalid.add(group.getKey());
+            notes.put("JAR filenames: " + group.getKey(), note);
+        }
         for (var entry : entries) {
             String filename = (String) entry.get("jar"), key = filename.toLowerCase(Locale.ROOT);
             if (!seen.add(key)) { invalid.add(key); notes.put("Config: " + filename, "Duplicate jar entries; keep only one source per JAR"); }
@@ -40,6 +52,11 @@ final class ConfigSources {
             var match = Discovery.matchReport(jars, p);
             var jar = match.jar();
             if (match.note() != null) notes.put(p.name(), match.note());
+            var collisions = jars.stream().filter(j -> Discovery.metadataMatches(j, p))
+                    .map(j -> filenameCollisions.get(j.path().getFileName().toString().toLowerCase(Locale.ROOT)))
+                    .filter(Objects::nonNull).distinct().toList();
+            // Never reuse a case-insensitive config row across distinct files, including through legacy fallback.
+            if (!collisions.isEmpty()) { notes.put(p.name(), String.join("; ", collisions)); continue; }
             var legacy = config.getConfigurationSection("plugins." + p.name());
             var matching = jar == null ? List.<Map<String,Object>>of() : entries.stream()
                     .filter(e -> jar.path().getFileName().toString().equalsIgnoreCase(Objects.toString(e.get("jar"), ""))).toList();
