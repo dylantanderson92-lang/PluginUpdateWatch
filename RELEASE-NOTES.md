@@ -1,3 +1,19 @@
+# PluginUpdateWatch 1.3.2
+
+Download **PluginUpdateWatch-1.3.2.jar** from Assets. Stop the server, replace the old PluginUpdateWatch JAR, keep the configuration folder, then restart.
+
+- Preserve the publisher's JAR filename for GitHub and Modrinth downloads. Providers without a filename use `<PluginName>.jar`. Remove the generated `plugin-` prefix and hash suffix. Existing files belonging to a different plugin, unreadable files and case-conflicting names are never overwritten.
+- Add `/pu cleanup` to preview obsolete config entries, and `/pu cleanup confirm` to remove them after saving an exact config backup. Only missing-file entries are removed; plugin JARs, downloaded files, plugin data and legacy settings remain untouched. Update an old row's filename before cleanup if you want to keep its source for a renamed JAR.
+- Increase the bounded plugin descriptor limit from 64 KiB to 1 MiB in both discovery and download validation, fixing rejection of the observed EssentialsX and mcMMO JARs.
+- Display deliberately disabled plugins as informational entries and count them separately from unresolved plugins.
+- Print each check report once in the console instead of logging the same warnings and results twice.
+
+Existing two-field config entries remain supported. Download checksums and archive validation remain enforced. Existing downloads are not renamed or deleted. Missing compatible Modrinth releases and unknown source links still require review; this release does not assume that an unlisted Minecraft version is supported.
+
+Validation: Maven `clean verify` passed **89 tests**, including 14 new cleanup, filename and descriptor regressions. Live verification results are recorded in [the live test report](https://github.com/dylantanderson92-lang/PluginUpdateWatch/blob/main/LIVE-TEST-REPORT.md).
+
+---
+
 # PluginUpdateWatch 1.3.1
 
 Download **PluginUpdateWatch-1.3.1.jar** from Assets. Stop the server, replace the older PluginUpdateWatch JAR, keep its configuration folder, then restart.

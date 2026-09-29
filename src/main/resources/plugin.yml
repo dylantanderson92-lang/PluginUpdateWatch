@@ -1,5 +1,5 @@
 name: PluginUpdateWatch
-version: 1.3.1
+version: 1.3.2
 main: dev.updatewatch.UpdateWatch
 # Minimum API, not a version range. See COMPATIBILITY.md and Compatibility.java.
 # Targeted Paper range: 1.21.11–26.3. Tested APIs/runtimes are listed in COMPATIBILITY.md.
@@ -11,7 +11,7 @@ commands:
     aliases: [pu]
     description: Check and download plugin updates
     permission: pluginupdatewatch.admin
-    usage: /pu [list|scan|check|download <plugin>|stats|reload]
+    usage: /pu [list|scan|check|download <plugin>|cleanup [confirm]|stats|reload]
 permissions:
   pluginupdatewatch.admin:
     default: op

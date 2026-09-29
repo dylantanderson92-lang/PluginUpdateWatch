@@ -7,6 +7,8 @@ final class DownloadManager {
     interface Opener { InputStream open(String url, int seconds) throws IOException; }
     static Path download(Remote.Source source, Remote.Release release, Path folder, Settings settings, boolean requireChecksum, Opener opener) throws Exception {
         if (requireChecksum && !release.hasChecksum()) throw Failure.problem(Failure.Kind.INVALID_ARTIFACT, source.type() + " supplies no supported checksum; use the release page for a manual download, or explicitly set downloads.require-checksum: false");
+        String filename = release.filename() == null ? source.name() + ".jar" : release.filename();
+        if (!Discovery.validFilename(filename)) throw Failure.problem(Failure.Kind.INVALID_ARTIFACT, "Unsafe download filename; use the release page for a manual download");
         Files.createDirectories(folder);
         Path temp = Files.createTempFile(folder, ".download-", ".tmp");
         try {
@@ -20,11 +22,16 @@ final class DownloadManager {
             }
             Remote.verifyHash(temp, release, requireChecksum);
             Remote.validate(temp, source.name());
-            String filename = "plugin-" + source.name().replaceAll("[^A-Za-z0-9_-]", "_") + "-" + release.version().replaceAll("[^A-Za-z0-9._-]", "_");
-            filename = filename.substring(0, Math.min(filename.length(), 140));
-            String suffix = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
-                    .digest((source.name() + "\n" + release.version()).getBytes(java.nio.charset.StandardCharsets.UTF_8))).substring(0, 12);
-            Path target = folder.resolve(filename + "-" + suffix + ".jar");
+            Path target = folder.resolve(filename);
+            // A generic asset name such as plugin.jar must never overwrite another plugin's download.
+            try (var files = Files.list(folder)) {
+                for (Path existing : files.filter(p -> p.getFileName().toString().equalsIgnoreCase(filename)).toList()) {
+                    if (!existing.getFileName().toString().equals(filename) || !Files.isRegularFile(existing, LinkOption.NOFOLLOW_LINKS))
+                        throw Failure.problem(Failure.Kind.INVALID_ARTIFACT, "Download filename conflicts with an existing file; move or rename " + existing.getFileName() + " first");
+                    try { Remote.validate(existing, source.name()); }
+                    catch (Exception e) { throw Failure.problem(Failure.Kind.INVALID_ARTIFACT, "Existing " + filename + " could not be verified as the same plugin; move or rename it first", e); }
+                }
+            }
             try { Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
             catch (AtomicMoveNotSupportedException e) { Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING); }
             return target;

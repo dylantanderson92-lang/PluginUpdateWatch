@@ -4,6 +4,10 @@ PluginUpdateWatch targets Paper **1.21.11–26.3**. `plugin.yml` deliberately de
 
 The plugin uses Java 21 bytecode. Run the Java version required by your Paper build; the live test environments use Java 21.0.12 for Paper 1.21.11 and Java 25.0.4.1 for Paper 26.3.
 
+## 1.3.2
+
+The final local 1.3.2 JAR passed startup, scan/check/list/reload, a real Modrinth download with its exact publisher filename and verified SHA-512, missing-checksum rejection, config cleanup preview/confirmation/backup, and informational disabled-plugin reporting on Paper **1.21.11 build 132 / Java 21** and **26.3 build 41 alpha / Java 25**. The minimum API and target range are unchanged. See [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) for exact scope and artifact evidence.
+
 ## Published 1.3.0
 
 The [published release](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.3.0) passed all **72 tests** in Maven CI on both Java 21 and Java 25, using the declared `1.21.11-R0.1-SNAPSHOT` API. Its source also compiled locally against cached `26.3.build.6-alpha`, with local tests passing on Java 25. That alternate API check applies to the cached build, not every 26.3 build.

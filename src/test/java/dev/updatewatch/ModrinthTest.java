@@ -40,6 +40,7 @@ class ModrinthTest {
         JsonObject v = stable(); v.getAsJsonArray("files").add(file("alternate.jar", false));
         JsonArray versions = new JsonArray(); versions.add(v);
         assertEquals("https://cdn.modrinth.com/plugin.jar", Modrinth.select(versions, source).download());
+        assertEquals("plugin.jar", Modrinth.select(versions, source).filename());
         v.getAsJsonArray("files").get(0).getAsJsonObject().addProperty("primary", false);
         assertNull(Modrinth.select(versions, source).download());
     }

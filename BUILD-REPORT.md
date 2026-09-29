@@ -1,3 +1,18 @@
+# Build verification — 1.3.2
+
+Checked 30 September 2026 (Pacific/Auckland).
+
+- Local Maven `clean verify` passed on Java 21: **89 tests, zero failures, errors or skipped tests**, followed by successful shaded JAR packaging.
+- `ConfigCleanupTest` adds seven tests covering preview without mutation, exact backups, preservation of plugin files/data and settings, rejection of intervening config/file changes, case-insensitive existence checks, invalid rows/paths and unavailable directories.
+- `DownloadFilenameTest` adds seven tests covering exact publisher names, plain fallback names, unsafe filename rejection, cross-plugin collision protection, safe same-plugin replacement, large descriptors and the descriptor size limit.
+- Existing GitHub and Modrinth tests also assert that the selected provider filename is retained.
+- Read-only verification against the supplied server's real EssentialsX descriptor (67,135 bytes) and mcMMO descriptor (110,525 bytes) passed both discovery and full JAR validation. Neither JAR was changed.
+- CI runs the full Maven suite on Java 21 and Java 25. See [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) for live command coverage and exact artifact evidence.
+
+The added cleanup command only removes config rows after an explicit preview/confirmation and an exact backup. It does not infer old-to-new plugin identity, delete plugin data or automatically rewrite custom source URLs.
+
+---
+
 # Build verification — 1.3.1 and historical 1.3.0
 
 Checked 27 September 2026 (Pacific/Auckland).

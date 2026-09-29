@@ -38,8 +38,8 @@ final class JarValidation {
                 if (entry == null) continue;
                 found = true;
                 try (var in = jar.getInputStream(entry)) {
-                    byte[] bytes = in.readNBytes(65537);
-                    if (bytes.length > 65536) throw new IOException("Plugin descriptor too large");
+                    byte[] bytes = in.readNBytes(Discovery.MAX_DESCRIPTOR_BYTES + 1);
+                    if (bytes.length > Discovery.MAX_DESCRIPTOR_BYTES) throw new IOException("Plugin descriptor exceeds 1 MiB");
                     var yaml = new YamlConfiguration(); yaml.loadFromString(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
                     if (!expectedName.equalsIgnoreCase(yaml.getString("name", ""))) throw new IOException("Downloaded JAR belongs to a different plugin");
                     if (yaml.getString("version", "").isBlank()) throw new IOException("Plugin version missing");

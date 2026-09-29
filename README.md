@@ -2,12 +2,12 @@
 
 Detect installed Paper plugins, find update sources, notify admins, and download updates on request. Supports **Modrinth, Spigot and GitHub**.
 
-**[Download PluginUpdateWatch 1.3.1](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.3.1)** — choose `PluginUpdateWatch-1.3.1.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation.
+**[Download PluginUpdateWatch 1.3.2](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.3.2)** — choose `PluginUpdateWatch-1.3.2.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation.
 
 ## Install or upgrade
 
 1. Stop the server.
-2. Put `PluginUpdateWatch-1.3.1.jar` into the server's `plugins` folder. Remove the older PluginUpdateWatch JAR if upgrading. Keep its existing configuration folder.
+2. Put `PluginUpdateWatch-1.3.2.jar` into the server's `plugins` folder. Remove the older PluginUpdateWatch JAR if upgrading. Keep its existing configuration folder.
 3. Start the server. A scan begins automatically after startup.
 4. Run `/pu list` as an operator to see updates or plugins needing a source link.
 
@@ -47,6 +47,14 @@ updates:
 
 Save and run `/pu reload`. A scan/check will run shortly. Run `/pu scan` to retry discovery any time. If a plugin's JAR filename changes during an upgrade, update its `jar` value. Unmatched old entries are retained and reported for review. Filename-based entries and discovery require original JARs directly in the plugins folder; legacy configured sources do not.
 
+## Cleaning obsolete config entries
+
+When a plugin JAR changes filename, update the existing `jar` field first to keep its configured source. PluginUpdateWatch does not guess which plugin an old, missing filename belonged to.
+
+Run `/pu cleanup` to preview entries whose files no longer exist in the configured plugins directory. Then run `/pu cleanup confirm` to remove those entries from `updates`. The original config, including removed source links and custom fields, is saved under `plugins/PluginUpdateWatch/backups/config-before-cleanup-*.yml`. A fresh scan runs afterward.
+
+The confirmation rechecks the config and missing-file list. If either changed, run a new preview. Existing files are retained even when their plugin is disabled, their descriptor is unreadable, or they are symbolic links. Legacy `plugins:` settings remain unchanged. Cleanup never deletes plugin JARs, downloaded updates, or other plugins' data folders. It is an explicit command, not automatic pruning on startup.
+
 ## Commands
 
 | Command | Action |
@@ -55,6 +63,8 @@ Save and run `/pu reload`. A scan/check will run shortly. Run `/pu scan` to retr
 | `/pu check` | Check known sources without retrying automatic discovery |
 | `/pu list` | Show cached updates and unresolved/configuration problems |
 | `/pu download <plugin>` | Download an available update; tab completion supplies the plugin name |
+| `/pu cleanup` | Preview config entries whose JAR files are missing |
+| `/pu cleanup confirm` | Back up config and remove exactly the previewed missing-file entries |
 | `/pu reload` | Reload config and schedule a new scan/check |
 | `/pu stats` | Show the last check duration, update count and per-provider success/failure counts |
 
@@ -62,7 +72,7 @@ Permission: `pluginupdatewatch.admin`, granted to operators by default. Console 
 
 ## Installing downloaded updates
 
-Downloads go to `plugins/PluginUpdateWatch/downloads/`. Review publisher compatibility notes, stop the server, replace the old plugin JAR with the download, then restart. Keep the plugin's data/configuration folder. Downloading does not overwrite running plugins or install automatically.
+Downloads go to `plugins/PluginUpdateWatch/downloads/`. GitHub and Modrinth downloads keep the exact safe publisher asset filename. When no filename is supplied (normally Spigot), the fallback is `<PluginName>.jar`. PluginUpdateWatch adds no `plugin-` prefix or hash suffix. If an existing filename belongs to another plugin, is unreadable, or has a conflicting letter case, the download is rejected without overwriting it; move or rename that downloaded file before retrying. Previously downloaded files are not renamed or deleted automatically. Review publisher compatibility notes, stop the server, replace the old plugin JAR with the download, then restart. Keep the plugin's data/configuration folder. Downloading does not overwrite running plugins or install automatically.
 
 ## Supported sources
 
@@ -70,7 +80,7 @@ Downloads go to `plugins/PluginUpdateWatch/downloads/`. Review publisher compati
 - **Spigot:** updates are checked using Spiget, which may lag behind Spigot. Premium or external resources show a manual download link.
 - **GitHub:** latest stable release. Direct download works when exactly one JAR is present. Multiple JARs require manual selection on the release page. A GitHub release-asset URL can select that filename in the latest release; update the link if the asset filename changes. No API token is required.
 
-Downloads must contain a Paper/Bukkit descriptor with the expected plugin name, a version and a main class file. Every archive entry is checked for size, CRC, unsafe paths and duplicates. Both descriptors are checked if present. This checks identity/format, not malware, publisher authenticity or every dependency. Numeric dotted versions are compared numerically; custom labels are shown as different releases requiring review. Source errors are never reported as up to date.
+Downloads must contain a Paper/Bukkit descriptor with the expected plugin name, a version and a main class file. Every archive entry is checked for size, CRC, unsafe paths and duplicates. Both descriptors are checked if present. Discovery and download validation permit descriptors up to 1 MiB, accommodating larger command/permission definitions such as EssentialsX and mcMMO while retaining a fixed limit. This checks identity/format, not malware, publisher authenticity or every dependency. Numeric dotted versions are compared numerically; custom labels are shown as different releases requiring review. Source errors are never reported as up to date.
 
 **Checksums are required by default**, including when the setting is absent from an older config. Modrinth supplies SHA-512 checksums. GitHub supplies SHA-256 digests for some assets, which are verified when available; it would be incorrect to say GitHub never provides checksums. Spigot/Spiget generally does not supply a supported checksum. Missing checksums block the automatic download with an explanation and a release-page link; update checking still works for all three providers.
 
@@ -98,7 +108,9 @@ Requests retry HTTP 408, 429 and all 5xx responses, plus connection timeouts/res
 
 Connect/read timeouts are clamped to the remaining request budget; elapsed time is checked between stages and body reads. JVM/OS DNS resolution is synchronous and may outlast that budget. Up to five redirects are accepted, with loop detection and validation on every destination. Only known GitHub, Modrinth and Spigot/Spiget API/CDN hosts are allowed; external download hosts require manual download. Resolved non-public addresses are rejected. No private API tokens or response bodies are logged.
 
-Archive expansion is additionally capped at 1 GiB overall, 256 MiB per entry and 100,000 entries. These fixed validation ceilings apply even if the download size limit is raised. Output filenames are sanitized and include a suffix to avoid collisions. Checksums and archive validation finish before accepting a JAR in the downloads folder.
+Archive expansion is additionally capped at 1 GiB overall, 256 MiB per entry and 100,000 entries. These fixed validation ceilings apply even if the download size limit is raised. Unsafe output filenames and conflicting existing files are rejected. Checksums and archive validation finish before accepting a JAR in the downloads folder.
+
+Intentionally disabled plugins are shown as informational entries and counted separately from unresolved plugins. A check prints each console report once.
 
 `debug: true` adds one scan summary to the console. `/pu stats` reports the most recently accepted check; these local diagnostics are not uploaded to a telemetry service. Provider errors are logged with the plugin/provider and HTTP status when available.
 
@@ -126,7 +138,7 @@ Targets Paper **1.21.11–26.3**, using Java 21 bytecode and no server internals
 
 Existing jar/source and legacy `plugins:` entries remain valid without migration. The deliberate safety change is that an **omitted** checksum setting now requires checksums; administrators wanting the earlier permissive behavior must explicitly opt out as described above. No config values are silently rewritten to opt out.
 
-Build with JDK 21+ and Maven 3.9+: `mvn clean verify`. The installable local artifact is `target/PluginUpdateWatch-1.3.1.jar`. Gson is bundled and relocated; do not install the `original-` JAR.
+Build with JDK 21+ and Maven 3.9+: `mvn clean verify`. The installable local artifact is `target/PluginUpdateWatch-1.3.2.jar`. Gson is bundled and relocated; do not install the `original-` JAR.
 
 Pull requests and main pushes build/test on Java 21 and 25. Actions stores the Java 21 JAR/checksum as the `plugin-java-21` artifact for 14 days, including development builds on main. To prepare a release, set matching versions in `pom.xml`, `plugin.yml` and `.github/release-version`, update the release notes, and complete live verification before merging the reviewed release PR. A main-branch push that changes `.github/release-version` runs both Java builds, verifies the artifact/version/checksum, creates the matching `v*` tag, and publishes that run's exact Java 21 artifact. Pushing a matching `v*` tag remains supported. Ordinary main pushes do not publish releases. Release notes include the curated notes and GitHub's generated changelog. The workflow never uses the older committed `downloads/` binaries and does not overwrite an existing release. Manual workflow runs on branches verify only; they do not publish a release.
 

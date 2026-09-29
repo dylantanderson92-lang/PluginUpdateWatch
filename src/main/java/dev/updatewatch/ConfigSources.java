@@ -65,7 +65,7 @@ final class ConfigSources {
             Map<String,Object> entry = matching.isEmpty() ? null : matching.getFirst();
             // Existing legacy entries remain authoritative unless the user supplies a new explicit link.
             if (legacy != null && (entry == null || Objects.toString(entry.get("source"), "").isBlank())) {
-                if (!legacy.getBoolean("enabled", true)) { notes.put(p.name(), "Disabled in existing configuration"); continue; }
+                if (!legacy.getBoolean("enabled", true)) { notes.put(p.name(), "[INFO] Disabled in existing configuration"); continue; }
                 String type = legacy.getString("source", "spigot");
                 try {
                     var source = new Remote.Source(p.name(), p.version(), type, legacy.getString(type.equalsIgnoreCase("github") ? "repository"
@@ -94,7 +94,7 @@ final class ConfigSources {
             if (!Discovery.validFilename(filename)) notes.put("Config: " + filename, "jar must be a filename ending in .jar, without a folder path");
             else if (jars.stream().noneMatch(j -> j.path().getFileName().toString().equalsIgnoreCase(filename)
                     && installed.stream().anyMatch(p -> Discovery.metadataMatches(j, p))))
-                notes.put("Config: " + filename, "JAR does not match an installed plugin; update the filename if it changed");
+                notes.put("Config: " + filename, "JAR does not match an installed plugin; update the filename if it changed, or run /pu cleanup to review missing-file entries");
         }
         return new Resolution(List.copyOf(sources), Collections.unmodifiableMap(new LinkedHashMap<>(notes)), entries.stream().map(Map::copyOf).toList());
     }

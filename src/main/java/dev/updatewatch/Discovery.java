@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.jar.JarFile;
 
 final class Discovery {
+    static final int MAX_DESCRIPTOR_BYTES = 1024 * 1024;
     record Installed(String name, String version, String website) {}
     record Jar(Path path, String name, String version) {}
     record Inventory(List<Jar> jars, Map<String, String> notes) {
@@ -55,8 +56,8 @@ final class Discovery {
             if (entry == null) entry = jar.getJarEntry("plugin.yml");
             if (entry == null) throw new DescriptorException("Not a plugin JAR: no plugin.yml or paper-plugin.yml descriptor");
             try (InputStream in = jar.getInputStream(entry)) {
-                byte[] bytes = in.readNBytes(65537);
-                if (bytes.length > 65536) throw new DescriptorException("Plugin descriptor exceeds 64 KiB; discovery skipped");
+                byte[] bytes = in.readNBytes(MAX_DESCRIPTOR_BYTES + 1);
+                if (bytes.length > MAX_DESCRIPTOR_BYTES) throw new DescriptorException("Plugin descriptor exceeds 1 MiB; discovery skipped");
                 YamlConfiguration yaml = new YamlConfiguration(); yaml.loadFromString(new String(bytes, StandardCharsets.UTF_8));
                 String name = yaml.getString("name", ""), version = yaml.getString("version", "");
                 List<String> missing = new ArrayList<>();

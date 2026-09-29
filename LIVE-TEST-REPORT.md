@@ -1,3 +1,30 @@
+# Live verification — 1.3.2
+
+Completed 30 September 2026 (Pacific/Auckland), using isolated localhost-only Paper servers and dedicated test worlds.
+
+| Runtime | Startup and commands | Exact publisher filename + SHA-512 | Cleanup preview/backup/confirmation | Disabled status and single console report | Shutdown |
+| --- | --- | --- | --- | --- | --- |
+| Paper 1.21.11 build 132 / Java 21.0.12 | Passed | Passed | Passed | Passed | Exit 0 |
+| Paper 26.3 build 41 alpha / Java 25.0.4.1 | Passed | Passed | Passed | Passed | Exit 0 |
+
+The final local 1.3.2 JAR was tested on both servers. Commands covered startup discovery, `pu scan`, `pu check`, `pu list`, `pu download LuckPerms`, `pu cleanup`, `pu cleanup confirm` and `pu reload`.
+
+- A real Modrinth download retained exactly `LuckPerms-Bukkit-5.5.71.jar`. Independent SHA-512 verification matched Modrinth metadata; the installed LuckPerms 5.5.53 JAR was unchanged.
+- A seeded missing-file entry was reported once. Cleanup preview left config unchanged; confirmation removed only that entry and saved the complete original config in a backup before a successful fresh scan.
+- A real Spigot check still reported an update, while downloading without a checksum remained blocked without creating/changing output files.
+- With LuckPerms deliberately disabled, the report showed zero unresolved plugins and one intentionally disabled plugin. The disabled message appeared once with no warning prefix.
+- The supplied server's EssentialsX and mcMMO JARs separately passed read-only discovery and full archive validation using the larger descriptor bound. No live-server config cleanup or installed-plugin replacement was performed on the user's server.
+
+Final local 1.3.2 JAR SHA-256:
+
+```text
+a4b08fca648b07203051378d2cfa31196d424ba05e96122ab4aeb03788d37341
+```
+
+CI rebuilds the reviewed source and publishes its exact Java 21 artifact with its own checksum; the local test hash can differ due to build timestamps/toolchains. The 26.3 runtime is an alpha build. Console coverage does not establish in-game chat interaction, long-duration performance or compatibility with every intervening Paper build. Cleanup deliberately does not infer which new JAR an old missing filename belonged to.
+
+---
+
 # Live verification — 1.3.0 and 1.3.1
 
 Completed 27 September 2026 (Pacific/Auckland). The exact published 1.3.0 JAR and the final locally packaged 1.3.1 JAR were each exercised on two real, isolated Paper servers with dedicated test worlds and localhost-only ports. Version 1.3.1 includes the additional filename-collision safeguard. The 26.3 runtime was copied from the supplied DylyCraft installation; the user's server and worlds were not modified or stopped.
