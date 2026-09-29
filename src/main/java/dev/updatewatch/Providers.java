@@ -43,9 +43,10 @@ final class Providers {
             JsonObject a = e.getAsJsonObject(); String name = a.get("name").getAsString();
             if (Discovery.validFilename(name) && pattern.matcher(name).matches()) matches.add(a);
         }
-        String download = null, sha256 = null;
+        String download = null, sha256 = null, filename = null;
         if (matches.size() == 1) {
             JsonObject a = matches.getFirst(); download = a.get("browser_download_url").getAsString();
+            filename = a.get("name").getAsString();
             if (a.has("digest") && !a.get("digest").isJsonNull()) {
                 String digest = a.get("digest").getAsString();
                 if (!digest.matches("sha256:[a-fA-F0-9]{64}")) throw Failure.problem(Failure.Kind.INVALID_RESPONSE, "GitHub asset has an unsupported or malformed digest");
@@ -54,7 +55,7 @@ final class Providers {
         }
         String version = v.get("tag_name").getAsString();
         if (version.isBlank()) throw Failure.problem(Failure.Kind.INVALID_RESPONSE, "GitHub release has an empty version");
-        return new Remote.Release(version, download, "https://github.com/" + s.id() + "/releases/latest", null, sha256);
+        return new Remote.Release(version, download, "https://github.com/" + s.id() + "/releases/latest", null, sha256, filename);
     }
     private static Remote.Release spigot(Remote.Source s, JsonFetch fetch) throws IOException {
         String base = "https://api.spiget.org/v2/resources/" + s.id();

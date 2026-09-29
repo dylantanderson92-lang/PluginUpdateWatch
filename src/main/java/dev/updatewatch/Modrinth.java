@@ -52,6 +52,7 @@ final class Modrinth {
             hash = hashes.get("sha512").getAsString();
         }
         return new Remote.Release(latest.get("version_number").getAsString(), selected == null ? null : selected.get("url").getAsString(),
-                "https://modrinth.com/plugin/" + source.id() + "/version/" + latest.get("id").getAsString(), hash);
+                "https://modrinth.com/plugin/" + source.id() + "/version/" + latest.get("id").getAsString(), hash, null,
+                selected == null ? null : selected.get("filename").getAsString());
     }
 }

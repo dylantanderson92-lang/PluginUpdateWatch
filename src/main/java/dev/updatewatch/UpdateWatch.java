@@ -25,6 +25,8 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
     private ExecutorService worker;
     private BukkitTask timer;
     private Map<String, String> discoveryNotes = Map.of();
+    private ConfigCleanup.Plan cleanupPreview;
+    private String cleanupOwner;
 
     @Override public void onEnable() {
         saveDefaultConfig();
@@ -124,17 +126,13 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                 }
                 boolean changed = !checked.equals(results);
                 changed |= !discoveryNotes.equals(resolution.notes());
-                resolution.notes().forEach((name, note) -> {
-                    if (!Objects.equals(discoveryNotes.get(name), note)) getLogger().warning(name + ": " + note);
-                });
                 discoveryNotes = resolution.notes();
                 results = checked; lastReport = report;
                 lastCheckFailure = null;
-                for (var result : results.values()) if (result.error() != null) getLogger().warning(result.source().name() + ": " + result.error());
                 if (checkSettings.debug()) getLogger().info("Check completed in " + report.durationMillis() + " ms; " + report.counts() + "; updates=" + updateCount());
                 if (sender != null) show(sender);
                 if (changed) {
-                    show(getServer().getConsoleSender());
+                    if (sender != getServer().getConsoleSender()) show(getServer().getConsoleSender());
                     if (hasUpdates()) for (var player : getServer().getOnlinePlayers())
                         if (player.hasPermission("pluginupdatewatch.admin") && player != sender) tell(player, "Plugin updates are available. Use /pu list.");
                 }
@@ -157,7 +155,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             if (!results.isEmpty()) tell(sender, "[WARNING] The results below are cached from an earlier check, not a fresh update status.");
         }
         if (results.isEmpty() && discoveryNotes.isEmpty()) tell(sender, "No results yet. Use /pu scan to detect installed plugins.");
-        discoveryNotes.forEach((name, note) -> tell(sender, (note.contains("[ERROR]") ? "" : "[WARNING] ") + name + ": " + note));
+        discoveryNotes.forEach((name, note) -> tell(sender, (note.contains("[ERROR]") || note.startsWith("[INFO]") ? "" : "[WARNING] ") + name + ": " + note));
         for (Result r : results.values()) {
             if (r.error() != null) { tell(sender, r.source().name() + ": check failed - " + r.error()); continue; }
             String label = switch (r.status()) {
@@ -177,8 +175,34 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             }
             sender.sendMessage(line);
         }
-        long untracked = Arrays.stream(getServer().getPluginManager().getPlugins()).filter(p -> p != this && !results.containsKey(p.getName().toLowerCase(Locale.ROOT))).count();
-        tell(sender, untracked + " plugin(s) not checked. See messages above; manual entries need only jar and source link.");
+        long disabled = discoveryNotes.values().stream().filter(n -> n.equals("[INFO] Disabled in existing configuration")).count();
+        long untracked = Arrays.stream(getServer().getPluginManager().getPlugins()).filter(p -> p != this && !results.containsKey(p.getName().toLowerCase(Locale.ROOT))
+                && !"[INFO] Disabled in existing configuration".equals(discoveryNotes.get(p.getName()))).count();
+        tell(sender, untracked + " plugin(s) not checked; " + disabled + " intentionally disabled. See messages above; manual entries need only jar and source link.");
+    }
+    private void cleanup(CommandSender sender, boolean confirm) {
+        if (checkState.running()) { tell(sender, "A check is running; retry cleanup when it finishes."); return; }
+        var configFile = getDataFolder().toPath().resolve("config.yml");
+        try {
+            String disk = java.nio.file.Files.readString(configFile);
+            if (!disk.equals(loadedConfig)) { tell(sender, "Config changed on disk. Run /pu reload before cleanup."); return; }
+            if (!confirm) {
+                cleanupPreview = ConfigCleanup.plan(disk, settings.pluginsFolder()); cleanupOwner = sender.getName();
+                if (cleanupPreview.missing().isEmpty()) { tell(sender, "No config entries reference missing JAR files."); return; }
+                tell(sender, "Cleanup preview: " + cleanupPreview.missing().size() + " config entry/entries reference missing files:");
+                cleanupPreview.missing().forEach(name -> tell(sender, " - " + name));
+                tell(sender, "If a plugin was renamed, update its jar entry to preserve its source first. Otherwise run /pu cleanup confirm. A config backup will be saved; no plugin files or data folders are deleted.");
+                return;
+            }
+            if (cleanupPreview == null || !sender.getName().equals(cleanupOwner) || cleanupPreview.missing().isEmpty()) {
+                tell(sender, "Run /pu cleanup to preview missing-file entries first."); return;
+            }
+            int count = cleanupPreview.missing().size();
+            var backup = ConfigCleanup.apply(configFile, settings.pluginsFolder(), cleanupPreview);
+            loadSettings(); checkState.invalidate(); results = Map.of(); discoveryNotes = Map.of(); lastReport = null; lastCheckFailure = null;
+            cleanupPreview = null; cleanupOwner = null; schedule();
+            tell(sender, "Removed " + count + " stale config entry/entries. Backup: " + backup + ". A fresh scan will run shortly.");
+        } catch (Exception e) { cleanupPreview = null; cleanupOwner = null; tell(sender, "Cleanup stopped: " + UpdateCheckService.message(e)); }
     }
     private void download(CommandSender sender, String name) {
         String key = name.toLowerCase(Locale.ROOT);
@@ -223,6 +247,10 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             case "check" -> check(sender, false);
             case "scan" -> check(sender, true);
             case "download" -> { if (args.length == 2) download(sender, args[1]); else tell(sender, "Usage: /pu download <plugin>"); }
+            case "cleanup" -> {
+                if (args.length == 1 || (args.length == 2 && args[1].equalsIgnoreCase("confirm"))) cleanup(sender, args.length == 2);
+                else tell(sender, "Usage: /pu cleanup [confirm]");
+            }
             case "stats" -> {
                 if (lastReport == null) tell(sender, "No completed check yet.");
                 else tell(sender, "Last check: " + lastReport.durationMillis() + " ms; updates: " + updateCount() + "; provider success/failure: " + lastReport.counts());
@@ -230,16 +258,18 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             case "reload" -> {
                 try {
                     loadSettings(); checkState.invalidate(); results = Map.of(); discoveryNotes = Map.of(); lastReport = null; lastCheckFailure = null;
+                    cleanupPreview = null; cleanupOwner = null;
                     schedule(); tell(sender, "Configuration reloaded. Automatic scan will run shortly.");
                 } catch (Exception e) { tell(sender, "Reload rejected; previous settings retained. " + Failure.classify(e).describe(null)); }
             }
-            default -> tell(sender, "Usage: /pu [list|scan|check|download <plugin>|stats|reload]");
+            default -> tell(sender, "Usage: /pu [list|scan|check|download <plugin>|cleanup [confirm]|stats|reload]");
         }
         return true;
     }
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission("pluginupdatewatch.admin")) return List.of();
-        List<String> choices = args.length == 1 ? List.of("list", "scan", "check", "download", "stats", "reload")
+        List<String> choices = args.length == 1 ? List.of("list", "scan", "check", "download", "cleanup", "stats", "reload")
+                : args.length == 2 && args[0].equalsIgnoreCase("cleanup") ? List.of("confirm")
                 : args.length == 2 && args[0].equalsIgnoreCase("download") ? results.values().stream()
                 .filter(r -> r.error() == null && r.status() != Versions.Status.CURRENT && r.release().download() != null && (!requireChecksum || r.release().hasChecksum())).map(r -> r.source().name()).toList() : List.of();
         String prefix = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);

@@ -20,7 +20,8 @@ final class Remote {
         }
     }
     record Source(String name, String installed, String type, String id, String asset, String minecraft) {}
-    record Release(String version, String download, String page, String sha512, String sha256) {
+    record Release(String version, String download, String page, String sha512, String sha256, String filename) {
+        Release(String version, String download, String page, String sha512, String sha256) { this(version, download, page, sha512, sha256, null); }
         Release(String version, String download, String page) { this(version, download, page, null, null); }
         Release(String version, String download, String page, String sha512) { this(version, download, page, sha512, null); }
         boolean hasChecksum() { return sha512 != null || sha256 != null; }
