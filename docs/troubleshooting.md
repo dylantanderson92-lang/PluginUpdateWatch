@@ -32,11 +32,13 @@ PluginUpdateWatch retains unmatched old entries instead of guessing which new fi
 
 If more than one JAR could represent the same installed plugin, PluginUpdateWatch reports the ambiguity rather than selecting one.
 
-Rename or remove the duplicate file, then run:
+Stop the server, move the duplicate JAR out of the plugins folder, restart, then run:
 
 ```text
 /pu scan
 ```
+
+Renaming a duplicate to another `.jar` filename in the same folder does not resolve duplicate plugin metadata. Keep only the intended copy in the plugins folder.
 
 ## Filenames differ only by case
 
@@ -49,7 +51,7 @@ alpha.jar
 
 are considered ambiguous.
 
-Rename or remove the conflicting file.
+Stop the server and inspect the conflicting files. If they are copies of the same plugin, move the unwanted copy out of the plugins folder. If they are different plugins, give them distinct filenames that differ by more than letter case and update any corresponding `jar:` entries in the config. Restart the server, then run `/pu scan`.
 
 ## Download blocked: checksum missing
 

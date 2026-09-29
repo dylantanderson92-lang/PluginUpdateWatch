@@ -10,10 +10,16 @@ PluginUpdateWatch targets:
 
 Folia and standalone Spigot are not claimed as supported.
 
+## Download
+
+[Download PluginUpdateWatch](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/latest){ .md-button .md-button--primary }
+
+Choose the normal `PluginUpdateWatch-<version>.jar` from the release's **Assets** section. The `.sha256` file is an optional checksum for verifying your download; it is not a plugin.
+
 ## Install
 
 1. Stop the Minecraft server.
-2. Download `PluginUpdateWatch-1.3.2.jar`.
+2. Download [PluginUpdateWatch-1.3.2.jar](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.3.2/PluginUpdateWatch-1.3.2.jar).
 3. Place the JAR in the server's `plugins` folder.
 4. Start the server.
 5. PluginUpdateWatch creates its configuration folder and begins a scan after startup.

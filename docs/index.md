@@ -12,6 +12,10 @@ Supported update sources:
 
 **PluginUpdateWatch 1.3.2**
 
+[Download PluginUpdateWatch](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/latest){ .md-button .md-button--primary }
+
+[Download the 1.3.2 JAR](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.3.2/PluginUpdateWatch-1.3.2.jar) or view the latest release above.
+
 ## Quick start
 
 1. Stop your Paper server.
