@@ -1,0 +1,94 @@
+site_name: PluginUpdateWatch
+site_description: Documentation for the PluginUpdateWatch Minecraft Paper plugin
+site_url: https://dylantanderson92-lang.github.io/PluginUpdateWatch/
+
+repo_name: dylantanderson92-lang/PluginUpdateWatch
+repo_url: https://github.com/dylantanderson92-lang/PluginUpdateWatch
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - pymdownx.details
+
+  - pymdownx.highlight:
+      anchor_linenums: true
+
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+
+  - pymdownx.tabbed:
+      alternate_style: true
+
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+
+  - Getting Started:
+      - Installation: installation.md
+      - Quick Start: getting-started.md
+
+  - Using PluginUpdateWatch:
+      - Commands: commands.md
+      - Finding Updates: update-checking.md
+      - Downloading Updates: downloads.md
+      - Cleaning Old Entries: cleanup.md
+
+  - Configuration:
+      - Configuration: configuration.md
+      - Adding Plugins Manually: manual-sources.md
+      - Checksums & Security: checksums.md
+
+  - Update Sources:
+      - Overview: sources/index.md
+      - Modrinth: sources/modrinth.md
+      - Spigot: sources/spigot.md
+      - GitHub: sources/github.md
+
+  - Reference:
+      - Permissions: permissions.md
+      - Compatibility: compatibility.md
+      - Troubleshooting: troubleshooting.md
+      - Changelog: changelog.md
+
+  - About: about.md

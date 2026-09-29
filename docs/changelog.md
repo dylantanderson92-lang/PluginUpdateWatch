@@ -1,0 +1,46 @@
+# Changelog
+
+## 1.3.2
+
+Current documented release.
+
+Highlights:
+
+- Preserve publisher JAR filenames for GitHub and Modrinth downloads.
+- Use `<PluginName>.jar` when a provider supplies no filename.
+- Add `/pu cleanup` and `/pu cleanup confirm`.
+- Back up the config before confirmed cleanup.
+- Increase the plugin descriptor limit from 64 KiB to 1 MiB.
+- Show deliberately disabled plugins as informational entries.
+- Avoid duplicate console reporting for each check.
+
+Validation documented for this release includes **89 Maven tests** plus live verification on the project's two documented Paper test environments.
+
+## 1.3.1
+
+Highlights:
+
+- Added protection against JAR filenames differing only by letter case.
+- Added discovery regression tests.
+- Retained checksum enforcement and existing configuration compatibility.
+
+## 1.3.0
+
+Highlights:
+
+- Added bounded network retries.
+- Required provider checksums by default.
+- Added configurable network and download limits.
+- Improved discovery ambiguity handling.
+- Improved error classification and reporting.
+- Added archive validation hardening.
+- Added Java 21 / 25 CI coverage.
+
+## 1.2.0
+
+Highlights:
+
+- Added automatic installed-plugin detection.
+- Added exact Modrinth SHA-512 lookup.
+- Added simple `jar` / `source` manual configuration.
+- Continued support for GitHub, Spigot and Modrinth.
