@@ -9,7 +9,7 @@ final class MetricsController implements AutoCloseable {
     private final Supplier<Runnable> start;
     private Runnable shutdown;
 
-    MetricsController(Supplier<Runnable> start) { this.start = start; }
+    MetricsController(Supplier<Runnable> start) { this.start = Objects.requireNonNull(start); }
 
     static boolean enabled(YamlConfiguration config) {
         if (!config.contains("metrics.enabled")) return true;
@@ -22,6 +22,8 @@ final class MetricsController implements AutoCloseable {
         if (!enabled) close();
         else if (shutdown == null) shutdown = Objects.requireNonNull(start.get());
     }
+
+    boolean started() { return shutdown != null; }
 
     @Override public void close() {
         if (shutdown == null) return;

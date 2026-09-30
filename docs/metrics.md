@@ -37,7 +37,7 @@ The public, read-only API can be used for a separate report or dashboard:
 
 Select a chart ID from the registry and request `/api/v1/plugins/34400/charts/{chartId}/data`. No private API key is needed for these public reports.
 
-`/pu stats` continues to show local update-check diagnostics; it does not query bStats.
+`/pu stats` now shows the local metrics state, but it cannot distinguish a shared bStats opt-out from server-side rate limiting until a submission is attempted.
 
 ## Release checklist
 
