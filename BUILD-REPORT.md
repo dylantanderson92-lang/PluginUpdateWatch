@@ -1,3 +1,17 @@
+# Build verification — 1.3.3-SNAPSHOT (bStats)
+
+Checked 1 October 2026 (Pacific/Auckland).
+
+- Local Java 21 Maven `clean verify`: **95 tests, zero failures, errors or skipped tests**; shaded JAR packaging succeeded.
+- Six new `MetricsControllerTest` tests cover the default for existing configs, explicit opt-out, rejection of malformed boolean values, no client creation while disabled, reload/disable/re-enable lifecycle without duplicate clients, and recovery after failed initialization.
+- bStats Bukkit/base 3.2.1 are bundled and relocated to `dev.updatewatch.lib.bstats`. The packaged JAR includes the bStats MIT copyright/license notice. No separate bStats JAR is required.
+- Registration was verified through the public bStats API: PluginUpdateWatch, ID 34400, owner dylyboo, Bukkit software ID 1.
+- Isolated Paper 1.21.11 (Java 21) and Paper 26.3 (Java 25) checks verified the global opt-out, local opt-out, exactly one reporting thread when enabled, no additional thread on repeated reloads, and termination of the reporting thread after local opt-out. Update checks remained functional. See the live test report.
+- Tests do not submit artificial usage to the public bStats dashboard. Successful public ingestion and dashboard counts are not claimed.
+- This development build does not change `.github/release-version`; merging it does not automatically publish a stable release. Documentation describes the new telemetry default and opt-out, and records the required Spigot listing wording change before stable publication.
+
+---
+
 # Build verification — 1.3.2
 
 Checked 30 September 2026 (Pacific/Auckland).

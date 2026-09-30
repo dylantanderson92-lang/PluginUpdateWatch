@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.*;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.event.*;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -19,6 +20,11 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
     private UpdateCheckService.Report lastReport;
     private Settings settings;
     private boolean requireChecksum;
+    private boolean metricsEnabled;
+    private final MetricsController metrics = new MetricsController(() -> {
+        var client = new Metrics(this, 34400);
+        return client::shutdown;
+    });
     private String loadedConfig;
     private String lastCheckFailure;
     private final Set<String> downloads = new HashSet<>();
@@ -42,15 +48,28 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         getServer().getPluginManager().registerEvents(this, this);
         Objects.requireNonNull(getCommand("pluginupdates")).setTabCompleter(this);
         schedule();
+        configureMetrics();
     }
-    @Override public void onDisable() { checkState.invalidate(); if (worker != null) worker.shutdownNow(); }
+    @Override public void onDisable() {
+        checkState.invalidate();
+        if (worker != null) worker.shutdownNow();
+        metrics.close();
+    }
+    private void configureMetrics() {
+        try { metrics.configure(metricsEnabled); }
+        catch (RuntimeException | LinkageError e) {
+            getLogger().warning("bStats could not start; update checks remain available. " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
     private void loadSettings() throws Exception {
         String contents = java.nio.file.Files.readString(getDataFolder().toPath().resolve("config.yml"));
         var parsed = ConfigManager.parse(contents);
         var loaded = Settings.parse(parsed, getDataFolder().toPath().toAbsolutePath().getParent());
         boolean checksumPolicy = Settings.requireChecksum(parsed);
+        boolean metricsPolicy = MetricsController.enabled(parsed);
         reloadConfig(); settings = loaded;
         requireChecksum = checksumPolicy;
+        metricsEnabled = metricsPolicy;
         loadedConfig = contents;
     }
     private void schedule() {
@@ -259,7 +278,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                 try {
                     loadSettings(); checkState.invalidate(); results = Map.of(); discoveryNotes = Map.of(); lastReport = null; lastCheckFailure = null;
                     cleanupPreview = null; cleanupOwner = null;
-                    schedule(); tell(sender, "Configuration reloaded. Automatic scan will run shortly.");
+                    configureMetrics(); schedule(); tell(sender, "Configuration reloaded. Automatic scan will run shortly.");
                 } catch (Exception e) { tell(sender, "Reload rejected; previous settings retained. " + Failure.classify(e).describe(null)); }
             }
             default -> tell(sender, "Usage: /pu [list|scan|check|download <plugin>|cleanup [confirm]|stats|reload]");

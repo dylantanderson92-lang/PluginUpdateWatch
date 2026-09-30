@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.3 (unreleased)
+
+- Add optional bStats usage metrics (plugin ID 34400), with a local `metrics.enabled` opt-out and support for the shared bStats opt-out.
+- Stop the metrics client on disable and avoid duplicate clients on reload.
+- Document public usage reports, reporting delays and the difference between active servers and lifetime installations.
+
+
 ## 1.3.2
 
 Current documented release.

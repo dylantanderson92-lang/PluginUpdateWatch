@@ -86,6 +86,7 @@ nav:
       - GitHub: sources/github.md
 
   - Reference:
+      - Usage Metrics: metrics.md
       - Permissions: permissions.md
       - Compatibility: compatibility.md
       - Troubleshooting: troubleshooting.md

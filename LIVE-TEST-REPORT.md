@@ -1,3 +1,24 @@
+# Live verification — bStats development build
+
+Checked 1 October 2026 (Pacific/Auckland), using the final local `PluginUpdateWatch-1.3.3-SNAPSHOT.jar`.
+
+Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25 both passed:
+
+- Plugin startup with bundled, relocated bStats 3.2.1.
+- Shared bStats opt-out: no reporting thread when globally disabled, even with the new local setting absent.
+- Plugin-specific opt-out: no reporting thread when `metrics.enabled: false`, even when globally enabled.
+- Enabling metrics: exactly one bStats reporting thread.
+- Repeated `/pu reload`: still exactly one reporting thread.
+- Disabling metrics through config and `/pu reload`: reporting thread terminates.
+- `/pu check` still completes after metrics opt-out.
+- Normal server stop with the metrics client active: both server processes exit with code 0.
+
+The checks used the existing isolated verification servers under `.work/live`, not the user's production server. The test JAR and metrics/config files were restored afterward. Tests finished before bStats' first scheduled submission; no public dashboard ingestion or installation count is claimed.
+
+Artifact SHA-256: `170aadf346fb206510fdfd471512f3640acd2afbfaaf5b4f08b6874834e3c849`
+
+---
+
 # Live verification — 1.3.2
 
 Completed 30 September 2026 (Pacific/Auckland), using isolated localhost-only Paper servers and dedicated test worlds.

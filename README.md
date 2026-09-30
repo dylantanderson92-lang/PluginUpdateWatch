@@ -138,10 +138,29 @@ Targets Paper **1.21.11–26.3**, using Java 21 bytecode and no server internals
 
 Existing jar/source and legacy `plugins:` entries remain valid without migration. The deliberate safety change is that an **omitted** checksum setting now requires checksums; administrators wanting the earlier permissive behavior must explicitly opt out as described above. No config values are silently rewritten to opt out.
 
-Build with JDK 21+ and Maven 3.9+: `mvn clean verify`. The installable local artifact is `target/PluginUpdateWatch-1.3.2.jar`. Gson is bundled and relocated; do not install the `original-` JAR.
+Build with JDK 21+ and Maven 3.9+: `mvn clean verify`. The installable local artifact is `target/PluginUpdateWatch-1.3.3-SNAPSHOT.jar`. Gson and bStats are bundled and relocated; do not install the `original-` JAR.
 
 Pull requests and main pushes build/test on Java 21 and 25. Actions stores the Java 21 JAR/checksum as the `plugin-java-21` artifact for 14 days, including development builds on main. To prepare a release, set matching versions in `pom.xml`, `plugin.yml` and `.github/release-version`, update the release notes, and complete live verification before merging the reviewed release PR. A main-branch push that changes `.github/release-version` runs both Java builds, verifies the artifact/version/checksum, creates the matching `v*` tag, and publishes that run's exact Java 21 artifact. Pushing a matching `v*` tag remains supported. Ordinary main pushes do not publish releases. Release notes include the curated notes and GitHub's generated changelog. The workflow never uses the older committed `downloads/` binaries and does not overwrite an existing release. Manual workflow runs on branches verify only; they do not publish a release.
 
 ## License
 
 PluginUpdateWatch's project code and documentation, including version 1.2.0, are available under the [MIT License](LICENSE). Third-party dependencies retain their own licenses and notices.
+
+## Usage metrics (upcoming 1.3.3)
+
+The upcoming 1.3.3 build integrates bStats, enabled by default (including when the setting is absent from an older config). [View the PluginUpdateWatch dashboard](https://bstats.org/plugin/bukkit/PluginUpdateWatch/34400).
+
+bStats reports active participating servers and plugin-version adoption, not lifetime installations or download counts. Offline servers, older builds without bStats, and servers that opt out are not counted as active.
+
+Only standard bStats metrics are sent: plugin/server versions, online-player count, online-mode setting, Java version, OS name/version/architecture, CPU core count and a random server identifier used by bStats. No custom charts are added. PluginUpdateWatch does not send installed-plugin lists, source URLs, configuration contents, update results, filenames, player names or chat. Aggregate charts are public. See [bStats information for server owners](https://bstats.org/docs/server-owners).
+
+To disable reporting for this plugin, add this to `plugins/PluginUpdateWatch/config.yml` and run `/pu reload`:
+
+```yaml
+metrics:
+  enabled: false
+```
+
+Alternatively, set `enabled: false` in the shared `plugins/bStats/config.yml` and restart the server to disable bStats across plugins. This plugin does not override that global choice. A report already in flight may finish when the local setting is disabled. Repeated reloads do not start duplicate clients.
+
+Reports start after bStats' normal delay (approximately 3–6 minutes) and recur about every 30 minutes. The dashboard/API may take longer to reflect them. `/pu stats` remains a local diagnostic command.

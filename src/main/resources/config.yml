@@ -4,6 +4,10 @@ notify-on-join: true
 # Empty uses the parent of this plugin's data folder. Relative paths use the server working directory.
 plugins-directory: ""
 debug: false
+# Basic bStats usage metrics (plugin ID 34400); also respects plugins/bStats/config.yml.
+# Set false and run /pu reload to stop this plugin reporting. Defaults true in older configs.
+metrics:
+  enabled: true
 network:
   connect-timeout-seconds: 10
   read-timeout-seconds: 15
