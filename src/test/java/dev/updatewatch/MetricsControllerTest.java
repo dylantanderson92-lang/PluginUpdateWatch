@@ -2,25 +2,30 @@ package dev.updatewatch;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
 class MetricsControllerTest {
     @Test void defaultsToEnabledForExistingConfigurations() {
-        assertTrue(MetricsController.enabled(new YamlConfiguration()));
+        var controller = new MetricsController(() -> null, Logger.getLogger("test"));
+        assertTrue(controller.enabled(new YamlConfiguration()));
     }
 
     @Test void acceptsExplicitOptOut() {
         var config = new YamlConfiguration();
         config.set("metrics.enabled", false);
-        assertFalse(MetricsController.enabled(config));
+        var controller = new MetricsController(() -> null, Logger.getLogger("test"));
+        assertFalse(controller.enabled(config));
     }
 
-    @Test void rejectsMalformedOptOutInsteadOfEnablingMetrics() {
-        for (Object value : new Object[] {"false", "no", 0, 1}) {
+    @Test void gracefullyHandlesMalformedOptOutByDefaultingToEnabled() {
+        for (Object value : new Object[] {"false", "no", 0, 1, 1.5}) {
             var config = new YamlConfiguration();
             config.set("metrics.enabled", value);
-            assertThrows(IllegalArgumentException.class, () -> MetricsController.enabled(config));
+            var controller = new MetricsController(() -> null, Logger.getLogger("test"));
+            // Should not throw; should log warning and default to true
+            assertTrue(controller.enabled(config));
         }
     }
 

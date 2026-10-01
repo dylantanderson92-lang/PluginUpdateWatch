@@ -47,8 +47,8 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         worker = Executors.newSingleThreadExecutor(r -> { Thread t = new Thread(r, "PluginUpdateWatch-IO"); t.setDaemon(true); return t; });
         getServer().getPluginManager().registerEvents(this, this);
         Objects.requireNonNull(getCommand("pluginupdates")).setTabCompleter(this);
-        schedule();
         configureMetrics();
+        schedule();
     }
     @Override public void onDisable() {
         checkState.invalidate();
@@ -66,7 +66,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         var parsed = ConfigManager.parse(contents);
         var loaded = Settings.parse(parsed, getDataFolder().toPath().toAbsolutePath().getParent());
         boolean checksumPolicy = Settings.requireChecksum(parsed);
-        boolean metricsPolicy = MetricsController.enabled(parsed);
+        boolean metricsPolicy = metrics.enabled(parsed);
         reloadConfig(); settings = loaded;
         requireChecksum = checksumPolicy;
         metricsEnabled = metricsPolicy;
@@ -210,7 +210,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                 if (cleanupPreview.missing().isEmpty()) { tell(sender, "No config entries reference missing JAR files."); return; }
                 tell(sender, "Cleanup preview: " + cleanupPreview.missing().size() + " config entry/entries reference missing files:");
                 cleanupPreview.missing().forEach(name -> tell(sender, " - " + name));
-                tell(sender, "If a plugin was renamed, update its jar entry to preserve its source first. Otherwise run /pu cleanup confirm. A config backup will be saved; no plugin files or data folders are deleted.");
+                tell(sender, "If a plugin was renamed, update its jar entry to preserve its source first. Otherwise run /pu cleanup confirm. A config backup will be saved; no plugin files or data[..."]);
                 return;
             }
             if (cleanupPreview == null || !sender.getName().equals(cleanupOwner) || cleanupPreview.missing().isEmpty()) {
@@ -290,7 +290,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         List<String> choices = args.length == 1 ? List.of("list", "scan", "check", "download", "cleanup", "stats", "reload")
                 : args.length == 2 && args[0].equalsIgnoreCase("cleanup") ? List.of("confirm")
                 : args.length == 2 && args[0].equalsIgnoreCase("download") ? results.values().stream()
-                .filter(r -> r.error() == null && r.status() != Versions.Status.CURRENT && r.release().download() != null && (!requireChecksum || r.release().hasChecksum())).map(r -> r.source().name()).toList() : List.of();
+                .filter(r -> r.error() == null && r.status() != Versions.Status.CURRENT && r.release().download() != null && (!requireChecksum || r.release().hasChecksum())).map(r -> r.source().n[...];
         String prefix = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);
         return choices.stream().filter(s -> s.toLowerCase(Locale.ROOT).startsWith(prefix)).toList();
     }
