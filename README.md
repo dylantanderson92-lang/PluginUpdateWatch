@@ -2,12 +2,12 @@
 
 Detect installed Paper plugins, find update sources, notify admins, and download updates on request. Supports **Modrinth, Spigot and GitHub**.
 
-**[Download PluginUpdateWatch 1.3.2](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.3.2)** — choose `PluginUpdateWatch-1.3.2.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation.
+**[Download PluginUpdateWatch 1.3.3](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.3.3)** — choose `PluginUpdateWatch-1.3.3.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation.
 
 ## Install or upgrade
 
 1. Stop the server.
-2. Put `PluginUpdateWatch-1.3.2.jar` into the server's `plugins` folder. Remove the older PluginUpdateWatch JAR if upgrading. Keep its existing configuration folder.
+2. Put `PluginUpdateWatch-1.3.3.jar` into the server's `plugins` folder. Remove the older PluginUpdateWatch JAR if upgrading. Keep its existing configuration folder.
 3. Start the server. A scan begins automatically after startup.
 4. Run `/pu list` as an operator to see updates or plugins needing a source link.
 
@@ -134,11 +134,12 @@ Targets Paper **1.21.11–26.3**, using Java 21 bytecode and no server internals
 | Cached Paper 26.3 build 6 alpha API + Java 25 | Source compilation and local unit tests against this specific API build |
 | Published 1.3.0, Java 21 and 25 CI | 72 tests passed; see [the CI run](https://github.com/dylantanderson92-lang/PluginUpdateWatch/actions/runs/36248215330) |
 | Published 1.3.0 JAR, live Paper 1.21.11 build 132 / Java 21 and 26.3 build 41 alpha / Java 25 | Startup, scan/check/list/reload, real Modrinth download and missing-checksum rejection passed with the exact GitHub Release JAR; see [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) |
+| 1.3.3 verification | 95 local tests passed; the final local stable JAR passed live update/download/integrity/cleanup and bStats lifecycle checks on both Paper builds above. PR/release CI runs on Java 21 and 25; see [BUILD-REPORT.md](BUILD-REPORT.md) and [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) |
 | 1.3.1 verification | 75 local tests passed; the final local JAR passed startup, scan/check/list/reload, a real Modrinth download and missing-checksum rejection on both Paper builds above. See [BUILD-REPORT.md](BUILD-REPORT.md) and [LIVE-TEST-REPORT.md](LIVE-TEST-REPORT.md) |
 
 Existing jar/source and legacy `plugins:` entries remain valid without migration. The deliberate safety change is that an **omitted** checksum setting now requires checksums; administrators wanting the earlier permissive behavior must explicitly opt out as described above. No config values are silently rewritten to opt out.
 
-Build with JDK 21+ and Maven 3.9+: `mvn clean verify`. The installable local artifact is `target/PluginUpdateWatch-1.3.3-SNAPSHOT.jar`. Gson and bStats are bundled and relocated; do not install the `original-` JAR.
+Build with JDK 21+ and Maven 3.9+: `mvn clean verify`. The installable local artifact is `target/PluginUpdateWatch-1.3.3.jar`. Gson and bStats are bundled and relocated; do not install the `original-` JAR.
 
 Pull requests and main pushes build/test on Java 21 and 25. Actions stores the Java 21 JAR/checksum as the `plugin-java-21` artifact for 14 days, including development builds on main. To prepare a release, set matching versions in `pom.xml`, `plugin.yml` and `.github/release-version`, update the release notes, and complete live verification before merging the reviewed release PR. A main-branch push that changes `.github/release-version` runs both Java builds, verifies the artifact/version/checksum, creates the matching `v*` tag, and publishes that run's exact Java 21 artifact. Pushing a matching `v*` tag remains supported. Ordinary main pushes do not publish releases. Release notes include the curated notes and GitHub's generated changelog. The workflow never uses the older committed `downloads/` binaries and does not overwrite an existing release. Manual workflow runs on branches verify only; they do not publish a release.
 
@@ -146,9 +147,9 @@ Pull requests and main pushes build/test on Java 21 and 25. Actions stores the J
 
 PluginUpdateWatch's project code and documentation, including version 1.2.0, are available under the [MIT License](LICENSE). Third-party dependencies retain their own licenses and notices.
 
-## Usage metrics (upcoming 1.3.3)
+## Usage metrics
 
-The upcoming 1.3.3 build integrates bStats, enabled by default (including when the setting is absent from an older config). [View the PluginUpdateWatch dashboard](https://bstats.org/plugin/bukkit/PluginUpdateWatch/34400).
+Version 1.3.3 integrates bStats, enabled by default (including when the setting is absent from an older config). [View the PluginUpdateWatch dashboard](https://bstats.org/plugin/bukkit/PluginUpdateWatch/34400).
 
 bStats reports active participating servers and plugin-version adoption, not lifetime installations or download counts. Offline servers, older builds without bStats, and servers that opt out are not counted as active.
 
@@ -163,4 +164,4 @@ metrics:
 
 Alternatively, set `enabled: false` in the shared `plugins/bStats/config.yml` and restart the server to disable bStats across plugins. This plugin does not override that global choice. A report already in flight may finish when the local setting is disabled. Repeated reloads do not start duplicate clients.
 
-Reports start after bStats' normal delay (approximately 3–6 minutes) and recur about every 30 minutes. The dashboard/API may take longer to reflect them. `/pu stats` remains a local diagnostic command.
+Reports start after bStats' normal delay (approximately 3–6 minutes) and recur about every 30 minutes. The dashboard publishes at hh:00 and hh:30, so the first data point can take 3–36 minutes after startup. See [bStats troubleshooting](https://bstats.org/docs/troubleshooting). `/pu stats` remains a local diagnostic command.

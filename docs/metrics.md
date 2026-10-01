@@ -1,6 +1,6 @@
-# Usage Metrics (Upcoming 1.3.3)
+# Usage Metrics
 
-PluginUpdateWatch 1.3.2 does not include bStats. The upcoming 1.3.3 build adds the standard bStats client, registered as plugin **34400**.
+PluginUpdateWatch 1.3.3 includes the standard bStats client, registered as plugin **34400**. Earlier stable versions do not report usage.
 
 [Open the usage dashboard](https://bstats.org/plugin/bukkit/PluginUpdateWatch/34400)
 
@@ -27,7 +27,7 @@ See [bStats' server-owner documentation](https://bstats.org/docs/server-owners) 
 
 ## Reporting delay and API
 
-bStats normally waits approximately 3–6 minutes before the first report and sends subsequent reports about every 30 minutes. Allow additional time for the dashboard to update. PluginUpdateWatch does not force immediate submissions or send historical installation data.
+bStats normally waits approximately 3–6 minutes before the first report and sends subsequent reports about every 30 minutes. The website publishes at hh:00 and hh:30, so the first dashboard data point can take **3–36 minutes after startup**. See [bStats troubleshooting](https://bstats.org/docs/troubleshooting). PluginUpdateWatch does not force immediate submissions or send historical installation data.
 
 The public, read-only API can be used for a separate report or dashboard:
 
@@ -39,6 +39,8 @@ Select a chart ID from the registry and request `/api/v1/plugins/34400/charts/{c
 
 `/pu stats` continues to show local update-check diagnostics; it does not query bStats.
 
-## Release checklist
+## Troubleshooting
 
-Before publishing a build with this integration, replace the Spigot listing's **No telemetry** claim with **Optional bStats usage metrics; server owners can opt out** and link this page. The published 1.3.2 JAR remains unchanged.
+Use the server command `version PluginUpdateWatch` to confirm version 1.3.3 or later. `pu version` is not a supported command. Check that both the local and shared bStats settings permit reporting. For temporary diagnostics, bStats supports `logFailedRequests`, `logSentData` and `logResponseStatusText` in its shared config; restart after changing those settings. Turn verbose diagnostics off afterward.
+
+A successful submission in the console and a public dashboard/API outage are separate events. An HTTP 502 while viewing public statistics does not prove that the plugin failed to submit. Avoid repeated restarts to force reports: bStats limits submissions to one per half-hour window.

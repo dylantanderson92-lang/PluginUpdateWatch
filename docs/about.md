@@ -30,7 +30,7 @@ mvn clean verify
 The installable local artifact is:
 
 ```text
-target/PluginUpdateWatch-1.3.3-SNAPSHOT.jar
+target/PluginUpdateWatch-1.3.3.jar
 ```
 
 Do not install the `original-` JAR.

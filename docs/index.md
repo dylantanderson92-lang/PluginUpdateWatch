@@ -10,16 +10,16 @@ Supported update sources:
 
 ## Current version
 
-**PluginUpdateWatch 1.3.2**
+**PluginUpdateWatch 1.3.3**
 
 [Download PluginUpdateWatch](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/latest){ .md-button .md-button--primary }
 
-[Download the 1.3.2 JAR](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.3.2/PluginUpdateWatch-1.3.2.jar) or view the latest release above.
+[Download the 1.3.3 JAR](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.3.3/PluginUpdateWatch-1.3.3.jar) or view the latest release above.
 
 ## Quick start
 
 1. Stop your Paper server.
-2. Place `PluginUpdateWatch-1.3.2.jar` in the server's `plugins` folder.
+2. Place `PluginUpdateWatch-1.3.3.jar` in the server's `plugins` folder.
 3. Start the server.
 4. Run `/pu list` as an operator.
 5. Use `/pu scan` to retry automatic source discovery at any time.

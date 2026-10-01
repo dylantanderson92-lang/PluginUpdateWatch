@@ -113,7 +113,7 @@ final class HttpTransport {
                 c.setInstanceFollowRedirects(false);
                 c.setConnectTimeout(Math.min(settings.connectMillis(), remaining(deadline)));
                 c.setReadTimeout(Math.min(settings.readMillis(), remaining(deadline)));
-                c.setRequestProperty("User-Agent", "PluginUpdateWatch/1.3.3-SNAPSHOT (+https://github.com/dylantanderson92-lang/PluginUpdateWatch)");
+                c.setRequestProperty("User-Agent", "PluginUpdateWatch/1.3.3 (+https://github.com/dylantanderson92-lang/PluginUpdateWatch)");
                 int status = c.getResponseCode();
                 remaining(deadline);
                 if (Set.of(301, 302, 303, 307, 308).contains(status)) {
