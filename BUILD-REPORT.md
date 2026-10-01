@@ -1,3 +1,18 @@
+# Build verification — 1.3.3
+
+Checked 1 October 2026 (Pacific/Auckland).
+
+- Final stable build: Java 21 Maven `clean verify` passed **95 tests**, zero failures, errors or skipped tests.
+- Packaged descriptor declares version 1.3.3; bStats is bundled and relocated to `dev.updatewatch.lib.bstats`, with its MIT notice in `META-INF/BSTATS-LICENSE.txt`. No unrelocated `org/bstats/` classes are present.
+- All six metrics lifecycle tests and existing provider, discovery, concurrency, integrity and cleanup tests pass.
+- The final local stable JAR passed live checks on both documented Paper builds, including real Modrinth downloads, independent SHA-512 comparison, missing-checksum rejection, cleanup/backup and metrics opt-out/reload/shutdown checks.
+- PR and release automation run the full suite on Java 21 and 25. The release workflow publishes its exact Java 21 artifact and matching SHA-256 file after both builds pass.
+- README, wiki and release notes describe default-enabled bStats reporting, local/global opt-out, active-server count semantics and the 3–36 minute first dashboard delay.
+
+Local stable JAR SHA-256: `10f2d24dee99b1230ef51618f997c6d054cc4ff98a0bad98f0f67c0cda2c2751`. CI packaging timestamps can produce a different archive hash; the release asset's own checksum is authoritative.
+
+---
+
 # Build verification — 1.3.3-SNAPSHOT (bStats)
 
 Checked 1 October 2026 (Pacific/Auckland).

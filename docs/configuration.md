@@ -14,6 +14,9 @@ notify-on-join: true
 plugins-directory: ""
 debug: false
 
+metrics:
+  enabled: true
+
 network:
   connect-timeout-seconds: 10
   read-timeout-seconds: 15
@@ -105,9 +108,9 @@ Supported limits:
 | `max-size-mib` | 1–1024 |
 | `timeout-seconds` | 1–1800 |
 
-## Usage metrics in upcoming 1.3.3
+## Usage metrics
 
-The upcoming build adds `metrics.enabled`, defaulting to `true`. Set it to `false` and run `/pu reload` to stop this plugin reporting. See [Usage Metrics](metrics.md) for the reported data and the global bStats opt-out. The default configuration above describes published 1.3.2.
+Version 1.3.3 adds `metrics.enabled`, defaulting to `true`. Set it to `false` and run `/pu reload` to stop this plugin reporting. See [Usage Metrics](metrics.md) for the reported data and the global bStats opt-out. Older configs without this setting default to enabled; adding the section is optional unless you want to opt out.
 
 ## Applying changes
 

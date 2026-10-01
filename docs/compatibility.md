@@ -27,6 +27,12 @@ The documented live test environments include:
 | Paper 1.21.11 build 132 | Java 21 |
 | Paper 26.3 build 41 alpha | Java 25 |
 
+## 1.3.3 verification
+
+The final local stable JAR passed the checks listed below on both documented Paper environments. It also passed bStats local/global opt-out, reload without duplicate clients, opt-out thread shutdown and normal server shutdown checks. The unit suite contains **95 tests**; PR/release CI runs on Java 21 and 25.
+
+See the [build report](https://github.com/dylantanderson92-lang/PluginUpdateWatch/blob/main/BUILD-REPORT.md) and [live test report](https://github.com/dylantanderson92-lang/PluginUpdateWatch/blob/main/LIVE-TEST-REPORT.md).
+
 ## 1.3.2 verification
 
 The final local 1.3.2 JAR was documented as passing:

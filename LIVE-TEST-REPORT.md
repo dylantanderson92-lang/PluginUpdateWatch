@@ -1,3 +1,24 @@
+# Live verification — 1.3.3
+
+Checked 1 October 2026 (Pacific/Auckland), using the final local stable JAR.
+
+| Server | Runtime | Result |
+| --- | --- | --- |
+| Paper 1.21.11 build 132 | Java 21 | Passed |
+| Paper 26.3 build 41 alpha | Java 25 | Passed |
+
+Both servers passed startup, `pu scan`, `pu check`, `pu list`, `pu reload`, and a real `pu download LuckPerms` from Modrinth with independent SHA-512 verification. Missing-checksum downloads were rejected without changing output files. Cleanup preview, confirmation and exact config backup passed; deliberately disabled plugins appeared once as informational entries.
+
+The metrics-specific run verified global opt-out with the local setting absent, local opt-out while globally enabled, exactly one reporting thread after enabling and repeated reloads, thread termination after opting out, update checks after opt-out, and normal shutdown with the client active. Both processes exited with code 0.
+
+These checks used isolated localhost-only servers and dedicated test worlds. Public bStats submissions were disabled or the server was stopped before the initial reporting delay, avoiding artificial usage reports.
+
+Local stable JAR SHA-256: `10f2d24dee99b1230ef51618f997c6d054cc4ff98a0bad98f0f67c0cda2c2751`.
+
+Separately, the user's existing snapshot server console recorded a successful bStats submission after the empty-server pause. Public dashboard/API availability was not used as a release gate, and dashboard counts were not independently confirmed.
+
+---
+
 # Live verification — bStats development build
 
 Checked 1 October 2026 (Pacific/Auckland), using the final local `PluginUpdateWatch-1.3.3-SNAPSHOT.jar`.
