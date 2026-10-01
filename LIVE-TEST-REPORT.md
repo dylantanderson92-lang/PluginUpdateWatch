@@ -1,3 +1,21 @@
+# Exact published JAR verification — 1.3.3
+
+Checked 2 October 2026 (Pacific/Auckland).
+
+The GitHub release was published from commit `5f2e8c4ff6b9a1812c339dc36f6ad60cd0687ee0` before the documentation PR was merged. [Release CI](https://github.com/dylantanderson92-lang/PluginUpdateWatch/actions/runs/36838508545) passed Java 21 and Java 25 builds and published the exact verified Java 21 JAR.
+
+The downloaded GitHub asset, its checksum file, the JAR downloaded from Spigot, and the stable JAR installed in DylyCraft all match SHA-256:
+
+`67bc4735a2880190f1e4071e9446e749dbd3f460729cf886551880152b80ed78`
+
+The **exact published JAR** passed all isolated live checks on Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25: startup, scan/check/list/reload, real Modrinth download with independent SHA-512 verification, missing-checksum rejection, cleanup preview/confirmation/backup, and disabled-plugin informational reporting. Both servers also passed the bStats global/local opt-out, single-client reload, opt-out thread termination and active-client shutdown checks. Both server processes exited with code 0. Test metrics were disabled or stopped before submission.
+
+The stable descriptor, relocated bStats classes and bundled license were verified inside the published archive. DylyCraft was stopped when its installed JAR was checked; these tests did not start the production server.
+
+The release notes now accurately describe malformed metrics settings: version 1.3.3 rejects an invalid YAML boolean. It does not implement a warning-only fallback. Earlier notes claiming that fallback were incorrect; no release artifact or tag was replaced.
+
+---
+
 # Live verification — 1.3.3
 
 Checked 1 October 2026 (Pacific/Auckland), using the final local stable JAR.
