@@ -36,3 +36,7 @@ pu check
 ## Download tab completion
 
 For `/pu download`, tab completion supplies plugin names when an available update can be downloaded.
+
+## Console output in 1.4 preview
+
+Console and RCON hide successful up-to-date plugin rows and intentionally disabled informational entries. Updates, unknown web downloads, errors and configuration warnings remain visible. In-game `/pu list` keeps the full report. Alpha/beta/prerelease/development or unknown release types warn before downloading.

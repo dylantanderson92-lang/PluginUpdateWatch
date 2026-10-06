@@ -35,6 +35,24 @@ final class HttpTransport {
             return uri;
         } catch (IllegalArgumentException | NullPointerException e) { throw new IOException("Malformed remote URL", e); }
     }
+    /** Used only for explicitly configured web sources; DNS is checked before each connection. */
+    static URI webUri(String value) throws IOException {
+        try {
+            URI uri = URI.create(value);
+            String host = uri.getHost();
+            if (value.length() > 4096 || !"https".equalsIgnoreCase(uri.getScheme()) || host == null
+                    || uri.getUserInfo() != null || uri.getFragment() != null || (uri.getPort() != -1 && uri.getPort() != 443)
+                    || !host.contains(".") || host.endsWith(".") || host.contains(":")
+                    || host.matches("[0-9.]+") || host.toLowerCase(Locale.ROOT).endsWith(".localhost")
+                    || host.toLowerCase(Locale.ROOT).endsWith(".local"))
+                throw new IOException("Web source requires a public HTTPS hostname on port 443");
+            return uri;
+        } catch (IllegalArgumentException | NullPointerException e) { throw new IOException("Malformed web URL", e); }
+    }
+    static class Body extends FilterInputStream {
+        final URI uri;
+        Body(InputStream in, URI uri) { super(in); this.uri = uri; }
+    }
     private static HttpURLConnection connectPublic(URI uri) throws IOException {
         for (InetAddress a : InetAddress.getAllByName(uri.getHost())) {
             byte[] b = a.getAddress();
@@ -47,14 +65,18 @@ final class HttpTransport {
         return (HttpURLConnection) uri.toURL().openConnection();
     }
     InputStream open(String url, int seconds) throws IOException {
-        URI initial = safeUri(url);
+        return open(url, seconds, false);
+    }
+    InputStream openWeb(String url, int seconds) throws IOException { return open(url, seconds, true); }
+    private InputStream open(String url, int seconds, boolean web) throws IOException {
+        URI initial = web ? webUri(url) : safeUri(url);
         if (seconds <= 0) throw new IOException("Request timeout must be positive");
         checkCooldown(initial.getHost());
         long deadline = System.nanoTime() + seconds * 1_000_000_000L;
         for (int attempt = 1; ; attempt++) {
             long delay = 250L * attempt;
             String waitedHost = null;
-            try { return request(initial, deadline); }
+            try { return request(initial, deadline, web); }
             catch (Remote.HttpError error) {
                 boolean rateLimited = error.code == 429 || (error.code == 403 && error.retryAfterSeconds > 0);
                 if (!rateLimited && !retryable(error.code)) throw error;
@@ -101,7 +123,7 @@ final class HttpTransport {
         if (millis > 0) throw new Remote.HttpError(cooldown.status(), host, millis / 1000 + (millis % 1000 == 0 ? 0 : 1));
         cooldowns.remove(hostKey(host));
     }
-    private InputStream request(URI uri, long deadline) throws IOException {
+    private InputStream request(URI uri, long deadline, boolean web) throws IOException {
         Set<URI> visited = new HashSet<>();
         for (int redirects = 0; redirects <= 5; redirects++) {
             if (!visited.add(uri)) throw new IOException("Redirect loop detected");
@@ -113,20 +135,20 @@ final class HttpTransport {
                 c.setInstanceFollowRedirects(false);
                 c.setConnectTimeout(Math.min(settings.connectMillis(), remaining(deadline)));
                 c.setReadTimeout(Math.min(settings.readMillis(), remaining(deadline)));
-                c.setRequestProperty("User-Agent", "PluginUpdateWatch/1.3.3 (+https://github.com/dylantanderson92-lang/PluginUpdateWatch)");
+                c.setRequestProperty("User-Agent", "PluginUpdateWatch/1.4.0-SNAPSHOT (+https://github.com/dylantanderson92-lang/PluginUpdateWatch)");
                 int status = c.getResponseCode();
                 remaining(deadline);
                 if (Set.of(301, 302, 303, 307, 308).contains(status)) {
                     String location = c.getHeaderField("Location");
                     if (location == null) throw new IOException("Redirect missing Location header");
-                    try { uri = safeUri(uri.resolve(location).toString()); }
+                    try { uri = web ? webUri(uri.resolve(location).toString()) : safeUri(uri.resolve(location).toString()); }
                     catch (IllegalArgumentException e) { throw new IOException("Malformed redirect", e); }
                     continue;
                 }
                 if (status != 200) throw new Remote.HttpError(status, uri.getHost(), retryAfter(c, Instant.now()));
                 InputStream body = c.getInputStream();
                 handedOff = true;
-                return new FilterInputStream(body) {
+                return new Body(body, uri) {
                     private void prepare() throws IOException { c.setReadTimeout(Math.min(settings.readMillis(), remaining(deadline))); }
                     @Override public int read() throws IOException { prepare(); int n = in.read(); remaining(deadline); return n; }
                     @Override public int read(byte[] b, int off, int len) throws IOException { prepare(); int n = in.read(b, off, len); remaining(deadline); return n; }

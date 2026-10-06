@@ -13,7 +13,7 @@ final class Providers {
         try {
             var release = switch (s.type().toLowerCase(Locale.ROOT)) {
                 case "modrinth" -> Modrinth.select(fetch.get(Modrinth.url(s)).getAsJsonArray(), s);
-                case "github" -> github(s, fetch.get("https://api.github.com/repos/" + s.id() + "/releases/latest").getAsJsonObject());
+                case "github" -> github(s, newestGithub(fetch.get("https://api.github.com/repos/" + s.id() + "/releases?per_page=100").getAsJsonArray()));
                 case "spigot" -> spigot(s, fetch);
                 default -> throw new IOException("Unknown provider");
             };
@@ -37,6 +37,18 @@ final class Providers {
         if (!valid) throw new IllegalArgumentException("Invalid " + s.type() + " source ID");
         Pattern.compile(s.asset());
     }
+    private static JsonObject newestGithub(JsonArray releases) throws IOException {
+        JsonObject selected = null;
+        java.time.Instant newest = java.time.Instant.MIN;
+        for (JsonElement element : releases) {
+            JsonObject release = element.getAsJsonObject();
+            if (release.get("draft").getAsBoolean()) continue;
+            java.time.Instant published = java.time.Instant.parse(release.get("published_at").getAsString());
+            if (published.isAfter(newest)) { newest = published; selected = release; }
+        }
+        if (selected == null) throw Failure.problem(Failure.Kind.NO_COMPATIBLE_RELEASE, "No published GitHub releases found");
+        return selected;
+    }
     private static Remote.Release github(Remote.Source s, JsonObject v) throws IOException {
         Pattern pattern = Pattern.compile(s.asset()); List<JsonObject> matches = new ArrayList<>();
         for (JsonElement e : v.getAsJsonArray("assets")) {
@@ -55,7 +67,9 @@ final class Providers {
         }
         String version = v.get("tag_name").getAsString();
         if (version.isBlank()) throw Failure.problem(Failure.Kind.INVALID_RESPONSE, "GitHub release has an empty version");
-        return new Remote.Release(version, download, "https://github.com/" + s.id() + "/releases/latest", null, sha256, filename);
+        String tag = java.net.URLEncoder.encode(version, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
+        return new Remote.Release(version, download, "https://github.com/" + s.id() + "/releases/tag/" + tag, null, sha256, filename,
+                v.get("prerelease").getAsBoolean() ? ReleaseType.PRERELEASE : ReleaseType.STABLE);
     }
     private static Remote.Release spigot(Remote.Source s, JsonFetch fetch) throws IOException {
         String base = "https://api.spiget.org/v2/resources/" + s.id();
@@ -63,6 +77,7 @@ final class Providers {
         boolean blocked = (info.has("premium") && info.get("premium").getAsBoolean()) || (info.has("external") && info.get("external").getAsBoolean());
         String name = version.get("name").getAsString(); long id = version.get("id").getAsLong();
         if (name.isBlank() || id <= 0) throw Failure.problem(Failure.Kind.INVALID_RESPONSE, "Spigot response has no valid release version");
-        return new Remote.Release(name, blocked ? null : base + "/versions/" + id + "/download", "https://www.spigotmc.org/resources/" + s.id() + "/");
+        return new Remote.Release(name, blocked ? null : base + "/versions/" + id + "/download", "https://www.spigotmc.org/resources/" + s.id() + "/",
+                null, null, null, ReleaseType.fromLabel(name));
     }
 }

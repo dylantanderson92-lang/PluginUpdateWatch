@@ -12,6 +12,15 @@ record Settings(int connectMillis, int readMillis, int metadataSeconds, int down
         if (!(value instanceof Boolean required)) throw new IllegalArgumentException("downloads.require-checksum must be true or false");
         return required;
     }
+    static boolean allowUnverifiedWeb(YamlConfiguration config) {
+        if (!config.contains("downloads.allow-unverified-web")) return true;
+        Object value = config.get("downloads.allow-unverified-web");
+        if (!(value instanceof Boolean allowed)) throw new IllegalArgumentException("downloads.allow-unverified-web must be true or false");
+        return allowed;
+    }
+    static boolean checksumRequired(Remote.Source source, boolean required, boolean allowWeb) {
+        return required && !(source.type().equals("web") && allowWeb);
+    }
     static Settings parse(YamlConfiguration config, Path defaultFolder) {
         String folder = config.getString("plugins-directory", "");
         return new Settings(number(config, "network.connect-timeout-seconds", 10, 1, 60) * 1000,

@@ -1,3 +1,34 @@
+# False-update regression verification — 1.4.0-SNAPSHOT
+
+Checked 7 October 2026 (Pacific/Auckland).
+
+- Java 21 and Java 25 Maven clean verify: **128 tests passed**. Ten additional regression tests cover the five reported plugin examples, numbered-build/platform normalization, conservative development labels, notification eligibility, identical installed files, stale advertised downloads, genuine newer builds and changed snapshots with unchanged descriptor versions.
+- The production log identified three formatting-only false alerts: Plan `5.8 build 3638` versus `5.8+build.3638`; LuckPerms `5.5.71` versus `v5.5.71-bukkit`; DoubleDoors `1.4.9` versus `paper-1.4.9`. These now compare as CURRENT.
+- BigDoors `0.1.8.71 → 0.1.8.72` and ResourcePackManager `2.4.5 → 2.4.6` were genuine updates in that log. Their downloaded descriptors and SHA-512 hashes match the newer Modrinth releases. Their generic filenames are unchanged between releases.
+- The corrected Java 21 JAR passed isolated Paper 1.21.11 / Java 21 and Paper 26.3 / Java 25 startup, scan/check/list/reload tests. A fixture with Plan's installed build label queried its real Modrinth source: CURRENT was suppressed from console, and its download command was refused as no update. The three Geyser/Floodgate/Essentials web downloads and strict checksum override still passed. Both test servers exited with code 0 and prior config/JARs were restored.
+- Update/join notifications now require a confirmed UPDATE result. Ambiguous labels and unknown web versions remain available as explicitly unconfirmed inspection downloads.
+- Download freshness checks run before the file is accepted: exact installed bytes are rejected when the original JAR can be matched; numeric downgrades and same/older descriptor versions behind an advertised update are rejected. A different snapshot with an unchanged version label is not falsely claimed to be newer.
+- Production files were only read for diagnosis; the running server and its configuration were not changed.
+
+Corrected local JAR SHA-256: `5159cf2ede634be28fe9a6955e0b02fca7b06cc90f81945a2999dc0d1ef37801`.
+
+---
+
+# Development verification — 1.4.0-SNAPSHOT
+
+Checked 6 October 2026 (Pacific/Auckland). This is an unreleased preview.
+
+- Java 21 and Java 25 Maven `clean verify`: **118 tests passed**, zero failures, errors or skipped tests.
+- Added 23 tests covering web/direct/extensionless sources, relative and redirected HTML links, bounded crawling, unsafe URLs/redirects, oversized pages, binary probing, provider fallbacks, checksum-policy scope, wrong-plugin/HTML/digest rejection, console filtering, and newest prerelease selection. Existing tests were updated for GitHub's release-list response and Modrinth's inclusive release policy.
+- The Java 21 packaged JAR passed isolated Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25 checks: startup, scan/check/list/reload, console suppression of CURRENT/disabled rows, visible configuration warnings, real Geyser/Floodgate/Essentials downloads, preserved output filenames, release-type warnings and strict-web-checksum rejection.
+- Live download checks used minimal installed fixture plugins with the expected names; downloaded upstream plugins were validated and saved, not installed or executed. This verifies PluginUpdateWatch's download flow, not those plugins' runtime compatibility. The fixture servers were stopped and their previous configs/JARs restored. Metrics submission was disabled.
+- The supplied Geyser endpoint returned Geyser-Spigot 2.11.3-SNAPSHOT (build 1248), saved as `Geyser-Spigot.jar`. Floodgate returned 2.2.5-SNAPSHOT (build 141), saved as `floodgate.jar`. Essentials returned 2.22.1-dev+27-e70bdb8 and retained `EssentialsX-2.22.1-dev+27-e70bdb8.jar`.
+- jsoup is bundled for HTML parsing; its MIT notice is retained at `META-INF/jsoup/LICENSE`. Network requests continue through the bounded HTTPS transport, never jsoup's network API.
+- Arbitrary HTML pages cannot reliably identify newest files or Minecraft compatibility. Such files retain UNKNOWN status; scripts/login flows are not executed. A fixed artifact URL remains fixed. GitHub selection examines the 100 most recent API entries. New options default safely for existing provider configurations; the requested missing-checksum exception applies only to explicit web entries.
+- Production DylyCraft was not started or modified for this verification.
+
+---
+
 # Published artifact verification — 1.3.3
 
 Checked 2 October 2026 (Pacific/Auckland).

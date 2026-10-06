@@ -1,6 +1,8 @@
 # PluginUpdateWatch
 
-Detect installed Paper plugins, find update sources, notify admins, and download updates on request. Supports **Modrinth, Spigot and GitHub**.
+Detect installed Paper plugins, find update sources, notify admins, and download updates on request. Supports **Modrinth, Spigot, GitHub and explicit HTTPS web sources**.
+
+**Development preview: 1.4.0-SNAPSHOT.** Web sources, quiet console reports and prerelease selection described below are new in this preview. The stable download below remains 1.3.3 until a new release is published.
 
 **[Download PluginUpdateWatch 1.3.3](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.3.3)** — choose `PluginUpdateWatch-1.3.3.jar` under Assets. Source code ZIP/TAR downloads are for developers, not server installation.
 
@@ -72,21 +74,31 @@ Permission: `pluginupdatewatch.admin`, granted to operators by default. Console 
 
 ## Installing downloaded updates
 
+The 1.4 preview normalizes Paper/Spigot/Bukkit wrappers and numbered-build labels such as Plan's `5.8 build 3638` and `5.8+build.3638`. These identify the same version. Only a demonstrably newer version triggers update notifications; different custom labels and unknown web versions are clearly marked unconfirmed and offer a **Download for inspection** action.
+
+Before saving, downloads are compared with an unambiguously matched original installed JAR when available. Identical bytes are rejected. Numerically older files, and same/older descriptor versions behind an advertised newer release, are also rejected without replacing an existing download. A changed development JAR with the same descriptor label can still be explicitly downloaded for inspection; its version alone does not prove it is newer.
+
 Downloads go to `plugins/PluginUpdateWatch/downloads/`. GitHub and Modrinth downloads keep the exact safe publisher asset filename. When no filename is supplied (normally Spigot), the fallback is `<PluginName>.jar`. PluginUpdateWatch adds no `plugin-` prefix or hash suffix. If an existing filename belongs to another plugin, is unreadable, or has a conflicting letter case, the download is rejected without overwriting it; move or rename that downloaded file before retrying. Previously downloaded files are not renamed or deleted automatically. Review publisher compatibility notes, stop the server, replace the old plugin JAR with the download, then restart. Keep the plugin's data/configuration folder. Downloading does not overwrite running plugins or install automatically.
 
 ## Supported sources
 
-- **Modrinth:** stable releases listed for the server Minecraft version and Paper, Spigot or Bukkit. The primary matching JAR is preferred, and its SHA-512 checksum is verified.
+- **Modrinth:** newest published release, beta or alpha listed for the server Minecraft version and Paper, Spigot or Bukkit. The primary matching JAR is preferred, and its SHA-512 checksum is verified.
 - **Spigot:** updates are checked using Spiget, which may lag behind Spigot. Premium or external resources show a manual download link.
-- **GitHub:** latest stable release. Direct download works when exactly one JAR is present. Multiple JARs require manual selection on the release page. A GitHub release-asset URL can select that filename in the latest release; update the link if the asset filename changes. No API token is required.
+- **GitHub:** newest published release by publication date among the 100 most recent API entries, including prereleases and excluding drafts. Direct download works when exactly one JAR is present. Multiple JARs require manual selection on the release page. A GitHub release-asset URL can select that filename in the latest release; update the link if the asset filename changes. No API token is required.
+
+- **Web sources (1.4 preview):** explicit HTTPS wiki/project pages or direct JAR/download endpoints. See [web sources](docs/sources/web.md). A page can link to an existing provider or a downloadable file. Web sources are not automatically adopted from arbitrary plugin metadata websites.
+
+Release reports show stable, beta, alpha, prerelease, development/snapshot or unknown type. Modrinth and GitHub provide channel metadata; Spigot and direct files may only offer hints in version/filename labels. Non-stable and unknown types warn before download. After validation, the downloaded descriptor version is shown and development labels are warned about. **Latest does not mean production-safe**; review compatibility and backups before installing.
 
 Downloads must contain a Paper/Bukkit descriptor with the expected plugin name, a version and a main class file. Every archive entry is checked for size, CRC, unsafe paths and duplicates. Both descriptors are checked if present. Discovery and download validation permit descriptors up to 1 MiB, accommodating larger command/permission definitions such as EssentialsX and mcMMO while retaining a fixed limit. This checks identity/format, not malware, publisher authenticity or every dependency. Numeric dotted versions are compared numerically; custom labels are shown as different releases requiring review. Source errors are never reported as up to date.
 
-**Checksums are required by default**, including when the setting is absent from an older config. Modrinth supplies SHA-512 checksums. GitHub supplies SHA-256 digests for some assets, which are verified when available; it would be incorrect to say GitHub never provides checksums. Spigot/Spiget generally does not supply a supported checksum. Missing checksums block the automatic download with an explanation and a release-page link; update checking still works for all three providers.
+**Checksums are required by default for GitHub, Spigot and Modrinth**, including when the setting is absent from an older config. Explicit web sources have a separate missing-checksum exception, described below. Modrinth supplies SHA-512 checksums. GitHub supplies SHA-256 digests for some assets, which are verified when available; it would be incorrect to say GitHub never provides checksums. Spigot/Spiget generally does not supply a supported checksum. Missing checksums block the automatic download with an explanation and a release-page link; update checking still works for all three providers.
 
 To deliberately allow a file without a checksum, set `downloads.require-checksum: false` and run `/pu reload`. An existing explicit `false` is preserved. These downloads still require HTTPS and archive validation, and chat plus console label them **unverified** before and after downloading. A supplied malformed or mismatched checksum always rejects the file, even when this exception is enabled. A provider checksum detects corruption; it is not an independent publisher signature or malware scan.
 
-## Network, downloads and diagnostics (1.3.0)
+Explicit web sources default to `downloads.allow-unverified-web: true`, as they often supply no checksum. This exception warns before and after downloading while retaining HTTPS, file-size, plugin-identity and archive checks. It does not relax the checksum policy for ordinary GitHub/Spigot/Modrinth entries. Set `allow-unverified-web: false` alongside `require-checksum: true` to require a checksum for web entries too. Supplied digests are always verified.
+
+## Network, downloads and diagnostics (1.3.0; web additions in 1.4 preview)
 
 Existing configs can omit these options; defaults are applied. Invalid numeric limits reject startup/reload with a specific message.
 
@@ -101,16 +113,17 @@ network:
 downloads:
   max-size-mib: 100 # 1–1024
   timeout-seconds: 120 # 1–1800, elapsed request budget
-  require-checksum: true # Set false explicitly only to allow missing checksums with warnings
+  require-checksum: true # Standard providers
+  allow-unverified-web: true # Web entries only; warn if no checksum. Set false for strict enforcement.
 ```
 
 Requests retry HTTP 408, 429 and all 5xx responses, plus connection timeouts/resets, using three total attempts by default. Backoff follows `250 ms × attempt`: the default two waits are 250 ms and 500 ms. The setting `network.attempts` remains supported. Short `Retry-After` delays (up to four seconds) override a shorter backoff when the request budget permits. Longer waits are reported to the admin and suppress further requests to that host during the current scan while the cooldown is active, rather than violating the provider's delay. A 429 without retry information gets the bounded retries first, then a 60-second cooldown if they are exhausted. GitHub's rate-reset epoch is recognized. Permanent denials and 404s are not retried. Interrupted or partial download bodies fail and their temporary files are removed; an entire download is not silently restarted.
 
-Connect/read timeouts are clamped to the remaining request budget; elapsed time is checked between stages and body reads. JVM/OS DNS resolution is synchronous and may outlast that budget. Up to five redirects are accepted, with loop detection and validation on every destination. Only known GitHub, Modrinth and Spigot/Spiget API/CDN hosts are allowed; external download hosts require manual download. Resolved non-public addresses are rejected. No private API tokens or response bodies are logged.
+Connect/read timeouts are clamped to the remaining request budget; elapsed time is checked between stages and body reads. JVM/OS DNS resolution is synchronous and may outlast that budget. Up to five redirects are accepted, with loop detection and validation on every destination. Standard providers remain restricted to known GitHub, Modrinth and Spigot/Spiget API/CDN hosts. Explicit web entries can access other public HTTPS hosts on port 443; redirects receive the same URL and address checks. Pages are capped at 2 MiB; discovery examines up to 512 links per page, three pages and three linked provider requests. It never runs scripts, signs in or bypasses access restrictions. Resolved non-public addresses are rejected. No private API tokens or response bodies are logged.
 
 Archive expansion is additionally capped at 1 GiB overall, 256 MiB per entry and 100,000 entries. These fixed validation ceilings apply even if the download size limit is raised. Unsafe output filenames and conflicting existing files are rejected. Checksums and archive validation finish before accepting a JAR in the downloads folder.
 
-Intentionally disabled plugins are shown as informational entries and counted separately from unresolved plugins. A check prints each console report once.
+Console and RCON reports omit successful CURRENT rows and informational discovery notes, including deliberately disabled plugins. Updates, unknown web downloads, failures and configuration problems remain visible, with a short summary. In-game `/pu list` retains the full report. Filtering changes presentation only; current results are still cached and counted. A check prints each console report once.
 
 `debug: true` adds one scan summary to the console. `/pu stats` reports the most recently accepted check; these local diagnostics are not uploaded to a telemetry service. Provider errors are logged with the plugin/provider and HTTP status when available.
 
