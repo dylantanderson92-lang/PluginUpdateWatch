@@ -4,6 +4,11 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ReportVisibilityTest {
+    @Test void onlyDemonstrablyNewerVersionsTriggerUpdateNotifications() {
+        for (var status : Versions.Status.values())
+            assertEquals(status == Versions.Status.UPDATE, ReportVisibility.confirmedUpdate(new UpdateCheckService.Result(null, null, status, null)));
+        assertFalse(ReportVisibility.confirmedUpdate(new UpdateCheckService.Result(null, null, Versions.Status.UPDATE, "Provider failed")));
+    }
     @Test void consoleSuppressesCurrentButPreservesEveryActionableResult() {
         for (var status : Versions.Status.values()) {
             var result = new UpdateCheckService.Result(null, null, status, null);

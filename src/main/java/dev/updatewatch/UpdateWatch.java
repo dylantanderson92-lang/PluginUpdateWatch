@@ -156,7 +156,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                 if (changed) {
                     if (sender != getServer().getConsoleSender()) show(getServer().getConsoleSender());
                     if (hasUpdates()) for (var player : getServer().getOnlinePlayers())
-                        if (player.hasPermission("pluginupdatewatch.admin") && player != sender) tell(player, "Plugin updates or downloads need review. Use /pu list.");
+                        if (player.hasPermission("pluginupdatewatch.admin") && player != sender) tell(player, "Newer plugin versions are available. Use /pu list.");
                 }
                 resumePendingScan();
             });
@@ -166,10 +166,10 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         if (checkState.takePendingScan()) check(null, true);
     }
     private long updateCount() { return results.values().stream().filter(r -> r.error() == null && r.status() == Versions.Status.UPDATE).count(); }
-    private boolean hasUpdates() { return results.values().stream().anyMatch(r -> r.error() == null && r.status() != Versions.Status.CURRENT); }
+    private boolean hasUpdates() { return results.values().stream().anyMatch(ReportVisibility::confirmedUpdate); }
     @EventHandler public void onJoin(PlayerJoinEvent event) {
         if (getConfig().getBoolean("notify-on-join", true) && event.getPlayer().hasPermission("pluginupdatewatch.admin") && hasUpdates())
-            tell(event.getPlayer(), "Plugin updates or downloads need review. Use /pu list.");
+            tell(event.getPlayer(), "Newer plugin versions are available. Use /pu list.");
     }
     private boolean checksumRequired(Result result) {
         return Settings.checksumRequired(result.source(), requireChecksum, allowUnverifiedWeb);
@@ -186,17 +186,18 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             if (!ReportVisibility.result(console, r)) continue;
             if (r.error() != null) { tell(sender, r.source().name() + ": check failed - " + r.error()); continue; }
             String label = switch (r.status()) {
-                case UNKNOWN -> "[WARNING] UNKNOWN | download found; version and Minecraft compatibility unverified";
+                case UNKNOWN -> "[WARNING] UNKNOWN | source offers a file; no newer version or Minecraft compatibility confirmed";
                 case CURRENT -> "[INFO] CURRENT | up to date (or installed version is newer)";
                 case UPDATE -> "[INFO] NOT_CURRENT | update available";
-                case DIFFERENT -> "[WARNING] NOT_CURRENT | different release; verify version ordering";
+                case DIFFERENT -> "[WARNING] UNKNOWN | different version label; no newer version confirmed";
             };
             NamedTextColor color = r.status() == Versions.Status.CURRENT ? NamedTextColor.GREEN : NamedTextColor.YELLOW;
             Component line = Component.text(r.source().name() + ": " + r.source().installed() + " -> " + r.release().version() + " - " + label, color);
             if (r.status() != Versions.Status.CURRENT) {
                 line = line.append(Component.text(" | " + r.release().type().message(), r.release().type().warning ? NamedTextColor.YELLOW : NamedTextColor.GRAY));
                 line = line.append(Component.text(" [Release page]", NamedTextColor.AQUA).clickEvent(ClickEvent.openUrl(r.release().page())));
-                if (r.release().download() != null && (!checksumRequired(r) || r.release().hasChecksum())) line = line.append(Component.text(" [Download]", NamedTextColor.GREEN)
+                if (r.release().download() != null && (!checksumRequired(r) || r.release().hasChecksum())) line = line.append(Component.text(
+                        r.status() == Versions.Status.UPDATE ? " [Download update]" : " [Download for inspection]", NamedTextColor.GREEN)
                         .clickEvent(ClickEvent.suggestCommand("/pu download " + r.source().name())));
                 else line = line.append(Component.text(" (manual download required)", NamedTextColor.YELLOW));
                 if (r.release().download() != null && !r.release().hasChecksum()) line = line.append(Component.text(checksumRequired(r)
@@ -245,6 +246,8 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             tell(sender, message); getLogger().warning(message); return;
         }
         if (!downloads.add(key)) { tell(sender, "That download is already running."); return; }
+        if (r.status() != Versions.Status.UPDATE)
+            tell(sender, "[WARNING] No newer version has been confirmed. This explicitly requested download is for inspection, not a verified upgrade.");
         tell(sender, "Downloading " + r.source().name() + " " + r.release().version() + "...");
         tell(sender, r.source().name() + ": " + r.release().type().message());
         if (r.release().type().warning && !(sender instanceof ConsoleCommandSender))
@@ -263,8 +266,11 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                 var descriptor = Discovery.read(path);
                 var inferredType = ReleaseType.fromLabel(descriptor.version());
                 var actualType = inferredType == ReleaseType.UNKNOWN ? r.release().type() : inferredType;
+                String freshness = Versions.compare(r.source().installed(), descriptor.version()) == Versions.Status.UPDATE
+                        ? "[INFO] JAR version is newer than the installed version. "
+                        : "[WARNING] JAR version does not establish a newer release; this file is for inspection only. ";
                 message = (r.release().hasChecksum() ? "[INFO] Checksum verified. " : "[WARNING] Checksum unverified (explicitly allowed). ")
-                        + "Saved " + path + ". Downloaded version: " + descriptor.version() + ". " + actualType.message()
+                        + "Saved " + path + ". Downloaded version: " + descriptor.version() + ". " + freshness + actualType.message()
                         + " Stop the server, replace the old plugin JAR, then restart. Check the release's Minecraft compatibility first.";
             } catch (Exception e) { message = Failure.classify(e).describe(r.source().type()) + " Retry downloads with /pu download " + r.source().name() + " after resolving the problem."; }
             String finalMessage = message;

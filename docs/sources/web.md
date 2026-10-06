@@ -28,6 +28,8 @@ For direct files without release metadata, reports show **UNKNOWN**: a download 
 
 ## Integrity policy and filenames
 
+An unknown web version does not trigger an update notification. Its button is labelled **Download for inspection**. When the installed original JAR can be matched, an identical download is rejected. Numerically older files are rejected as well. A changed snapshot with an unchanged version label may be saved for inspection, but the completion message explicitly says that a newer release has not been established.
+
 ```yaml
 downloads:
   require-checksum: true
@@ -39,4 +41,3 @@ Explicit web entries allow a missing checksum by default, with warnings before a
 HTTPS, public-address checks on each connection, redirects, size/time limits, expected plugin identity and archive validation remain enforced. These checks do not prove publisher authenticity or runtime compatibility. Arbitrary website metadata is not automatically adopted as a web source.
 
 A safe filename at the end of the URL is preserved, including spaces, `+` and build identifiers. Extensionless downloads use `<PluginName>.jar`. Downloads are saved under PluginUpdateWatch's `downloads` folder; replace the installed JAR while the server is stopped. No download is installed or executed automatically.
-

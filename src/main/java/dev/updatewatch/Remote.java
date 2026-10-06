@@ -52,8 +52,14 @@ final class Remote {
     }
     static Path download(Source source, Release release, Path folder, Settings settings, boolean requireChecksum) throws Exception {
         var transport = new HttpTransport(settings);
+        Path installed = null;
+        if (Files.isDirectory(settings.pluginsFolder())) {
+            var match = Discovery.matchReport(Discovery.inspect(settings.pluginsFolder()).jars(),
+                    new Discovery.Installed(source.name(), source.installed(), null));
+            if (match.jar() != null) installed = match.jar().path();
+        }
         return DownloadManager.download(source, release, folder, settings, requireChecksum,
-                source.type().equals("web") ? transport::openWeb : transport::open);
+                source.type().equals("web") ? transport::openWeb : transport::open, installed);
     }
     static void verifyHash(Path path, String expected) throws Exception { verifyHash(path, expected, "SHA-512"); }
     static void verifyHash(Path path, String expected, String algorithm) throws Exception {

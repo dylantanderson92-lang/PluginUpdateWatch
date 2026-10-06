@@ -74,6 +74,10 @@ Permission: `pluginupdatewatch.admin`, granted to operators by default. Console 
 
 ## Installing downloaded updates
 
+The 1.4 preview normalizes Paper/Spigot/Bukkit wrappers and numbered-build labels such as Plan's `5.8 build 3638` and `5.8+build.3638`. These identify the same version. Only a demonstrably newer version triggers update notifications; different custom labels and unknown web versions are clearly marked unconfirmed and offer a **Download for inspection** action.
+
+Before saving, downloads are compared with an unambiguously matched original installed JAR when available. Identical bytes are rejected. Numerically older files, and same/older descriptor versions behind an advertised newer release, are also rejected without replacing an existing download. A changed development JAR with the same descriptor label can still be explicitly downloaded for inspection; its version alone does not prove it is newer.
+
 Downloads go to `plugins/PluginUpdateWatch/downloads/`. GitHub and Modrinth downloads keep the exact safe publisher asset filename. When no filename is supplied (normally Spigot), the fallback is `<PluginName>.jar`. PluginUpdateWatch adds no `plugin-` prefix or hash suffix. If an existing filename belongs to another plugin, is unreadable, or has a conflicting letter case, the download is rejected without overwriting it; move or rename that downloaded file before retrying. Previously downloaded files are not renamed or deleted automatically. Review publisher compatibility notes, stop the server, replace the old plugin JAR with the download, then restart. Keep the plugin's data/configuration folder. Downloading does not overwrite running plugins or install automatically.
 
 ## Supported sources

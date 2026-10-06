@@ -6,6 +6,9 @@ import java.nio.file.*;
 final class DownloadManager {
     interface Opener { InputStream open(String url, int seconds) throws IOException; }
     static Path download(Remote.Source source, Remote.Release release, Path folder, Settings settings, boolean requireChecksum, Opener opener) throws Exception {
+        return download(source, release, folder, settings, requireChecksum, opener, null);
+    }
+    static Path download(Remote.Source source, Remote.Release release, Path folder, Settings settings, boolean requireChecksum, Opener opener, Path installed) throws Exception {
         if (requireChecksum && !release.hasChecksum()) throw Failure.problem(Failure.Kind.INVALID_ARTIFACT, source.type() + " supplies no supported checksum; use the release page for a manual download, or explicitly set downloads.require-checksum: false");
         String filename = release.filename() == null ? source.name() + ".jar" : release.filename();
         if (!Discovery.validFilename(filename)) throw Failure.problem(Failure.Kind.INVALID_ARTIFACT, "Unsafe download filename; use the release page for a manual download");
@@ -22,6 +25,7 @@ final class DownloadManager {
             }
             Remote.verifyHash(temp, release, requireChecksum);
             Remote.validate(temp, source.name());
+            ArtifactFreshness.validate(source, release, temp, installed);
             Path target = folder.resolve(filename);
             // A generic asset name such as plugin.jar must never overwrite another plugin's download.
             try (var files = Files.list(folder)) {

@@ -2,6 +2,10 @@
 
 ## 1.4.0-SNAPSHOT (unreleased preview)
 
+- Fix false alerts for Plan numbered-build labels, LuckPerms' Bukkit suffix and DoubleDoors' Paper prefix.
+- Notify only for confirmed newer versions; label ambiguous downloads as inspection only.
+- Reject identical installed JARs and stale descriptor versions behind advertised updates.
+
 - Suppress current and intentionally disabled plugin rows in console/RCON reports; keep full in-game listings.
 - Add explicit HTTPS wiki/project pages, direct JAR URLs and extensionless download endpoints.
 - Allow missing checksums for web sources with warnings and a separate strict-policy override.
