@@ -24,7 +24,6 @@ final class Modrinth {
         Instant newest = Instant.MIN;
         for (JsonElement element : versions) {
             JsonObject v = element.getAsJsonObject();
-            if (!"release".equals(v.get("version_type").getAsString())) continue;
             if (v.has("status") && !"listed".equals(v.get("status").getAsString())) continue;
             boolean gameMatches = false, loaderMatches = false;
             for (JsonElement game : v.getAsJsonArray("game_versions")) if (source.minecraft().equals(game.getAsString())) gameMatches = true;
@@ -33,7 +32,7 @@ final class Modrinth {
             Instant published = Instant.parse(v.get("date_published").getAsString());
             if (published.isAfter(newest)) { newest = published; latest = v; }
         }
-        if (latest == null) throw Failure.problem(Failure.Kind.NO_COMPATIBLE_RELEASE, "No stable Paper/Spigot/Bukkit release listed for Minecraft " + source.minecraft());
+        if (latest == null) throw Failure.problem(Failure.Kind.NO_COMPATIBLE_RELEASE, "No Paper/Spigot/Bukkit release (including alpha/beta) listed for Minecraft " + source.minecraft());
         Pattern pattern = Pattern.compile(source.asset());
         List<JsonObject> files = new ArrayList<>(), primary = new ArrayList<>();
         for (JsonElement element : latest.getAsJsonArray("files")) {
@@ -53,6 +52,6 @@ final class Modrinth {
         }
         return new Remote.Release(latest.get("version_number").getAsString(), selected == null ? null : selected.get("url").getAsString(),
                 "https://modrinth.com/plugin/" + source.id() + "/version/" + latest.get("id").getAsString(), hash, null,
-                selected == null ? null : selected.get("filename").getAsString());
+                selected == null ? null : selected.get("filename").getAsString(), ReleaseType.modrinth(latest.get("version_type").getAsString()));
     }
 }

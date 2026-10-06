@@ -20,7 +20,10 @@ final class Remote {
         }
     }
     record Source(String name, String installed, String type, String id, String asset, String minecraft) {}
-    record Release(String version, String download, String page, String sha512, String sha256, String filename) {
+    record Release(String version, String download, String page, String sha512, String sha256, String filename, ReleaseType type) {
+        Release(String version, String download, String page, String sha512, String sha256, String filename) {
+            this(version, download, page, sha512, sha256, filename, ReleaseType.UNKNOWN);
+        }
         Release(String version, String download, String page, String sha512, String sha256) { this(version, download, page, sha512, sha256, null); }
         Release(String version, String download, String page) { this(version, download, page, null, null); }
         Release(String version, String download, String page, String sha512) { this(version, download, page, sha512, null); }
@@ -42,9 +45,15 @@ final class Remote {
         } catch (HttpError | Failure.Problem e) { throw e; }
         catch (IOException e) { throw Failure.problem(Failure.Kind.NETWORK, "Could not complete the provider request", e); }
     }
-    static Release latest(Source s, Settings settings) throws IOException { return Providers.latest(s, url -> jsonValue(url, settings)); }
+    static Release latest(Source s, Settings settings) throws IOException {
+        var transport = new HttpTransport(settings);
+        Providers.JsonFetch json = url -> jsonValue(url, settings, transport);
+        return s.type().equals("web") ? SourcePage.latest(s, url -> SourcePage.read(url, settings, transport), json) : Providers.latest(s, json);
+    }
     static Path download(Source source, Release release, Path folder, Settings settings, boolean requireChecksum) throws Exception {
-        return DownloadManager.download(source, release, folder, settings, requireChecksum, new HttpTransport(settings)::open);
+        var transport = new HttpTransport(settings);
+        return DownloadManager.download(source, release, folder, settings, requireChecksum,
+                source.type().equals("web") ? transport::openWeb : transport::open);
     }
     static void verifyHash(Path path, String expected) throws Exception { verifyHash(path, expected, "SHA-512"); }
     static void verifyHash(Path path, String expected, String algorithm) throws Exception {

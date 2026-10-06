@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0-SNAPSHOT (unreleased preview)
+
+- Suppress current and intentionally disabled plugin rows in console/RCON reports; keep full in-game listings.
+- Add explicit HTTPS wiki/project pages, direct JAR URLs and extensionless download endpoints.
+- Allow missing checksums for web sources with warnings and a separate strict-policy override.
+- Select newest compatible Modrinth alpha/beta/release and newest published GitHub prerelease/release.
+- Display release-type warnings before download and descriptor versions afterward.
+- Add bounded HTML parsing, redirect/security and console filtering regression tests.
+
 ## 1.3.3
 
 - Add optional bStats usage metrics (plugin ID 34400), with a local `metrics.enabled` opt-out and support for the shared bStats opt-out.

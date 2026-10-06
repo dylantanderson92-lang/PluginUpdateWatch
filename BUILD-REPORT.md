@@ -1,3 +1,18 @@
+# Development verification — 1.4.0-SNAPSHOT
+
+Checked 6 October 2026 (Pacific/Auckland). This is an unreleased preview.
+
+- Java 21 and Java 25 Maven `clean verify`: **118 tests passed**, zero failures, errors or skipped tests.
+- Added 23 tests covering web/direct/extensionless sources, relative and redirected HTML links, bounded crawling, unsafe URLs/redirects, oversized pages, binary probing, provider fallbacks, checksum-policy scope, wrong-plugin/HTML/digest rejection, console filtering, and newest prerelease selection. Existing tests were updated for GitHub's release-list response and Modrinth's inclusive release policy.
+- The Java 21 packaged JAR passed isolated Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25 checks: startup, scan/check/list/reload, console suppression of CURRENT/disabled rows, visible configuration warnings, real Geyser/Floodgate/Essentials downloads, preserved output filenames, release-type warnings and strict-web-checksum rejection.
+- Live download checks used minimal installed fixture plugins with the expected names; downloaded upstream plugins were validated and saved, not installed or executed. This verifies PluginUpdateWatch's download flow, not those plugins' runtime compatibility. The fixture servers were stopped and their previous configs/JARs restored. Metrics submission was disabled.
+- The supplied Geyser endpoint returned Geyser-Spigot 2.11.3-SNAPSHOT (build 1248), saved as `Geyser-Spigot.jar`. Floodgate returned 2.2.5-SNAPSHOT (build 141), saved as `floodgate.jar`. Essentials returned 2.22.1-dev+27-e70bdb8 and retained `EssentialsX-2.22.1-dev+27-e70bdb8.jar`.
+- jsoup is bundled for HTML parsing; its MIT notice is retained at `META-INF/jsoup/LICENSE`. Network requests continue through the bounded HTTPS transport, never jsoup's network API.
+- Arbitrary HTML pages cannot reliably identify newest files or Minecraft compatibility. Such files retain UNKNOWN status; scripts/login flows are not executed. A fixed artifact URL remains fixed. GitHub selection examines the 100 most recent API entries. New options default safely for existing provider configurations; the requested missing-checksum exception applies only to explicit web entries.
+- Production DylyCraft was not started or modified for this verification.
+
+---
+
 # Published artifact verification — 1.3.3
 
 Checked 2 October 2026 (Pacific/Auckland).

@@ -84,6 +84,7 @@ nav:
       - Modrinth: sources/modrinth.md
       - Spigot: sources/spigot.md
       - GitHub: sources/github.md
+      - Web pages and direct URLs: sources/web.md
 
   - Reference:
       - Usage Metrics: metrics.md

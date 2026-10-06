@@ -34,8 +34,8 @@ class FailureTest {
         assertNull(result.status()); assertTrue(result.error().contains("[WARNING]")); assertTrue(result.error().contains("update status is unknown"));
     }
     @Test void successfulCurrentAndNewerReleaseAreSeparateFromErrors() {
-        var current = UpdateCheckService.checkSource(source("github", "owner/repo"), url -> JsonParser.parseString("{\"tag_name\":\"1.0\",\"assets\":[]}"));
-        var newer = UpdateCheckService.checkSource(source("github", "owner/repo"), url -> JsonParser.parseString("{\"tag_name\":\"2.0\",\"assets\":[]}"));
+        var current = UpdateCheckService.checkSource(source("github", "owner/repo"), url -> GithubReleaseTest.list("{\"tag_name\":\"1.0\",\"assets\":[]}"));
+        var newer = UpdateCheckService.checkSource(source("github", "owner/repo"), url -> GithubReleaseTest.list("{\"tag_name\":\"2.0\",\"assets\":[]}"));
         assertNull(current.error()); assertEquals(Versions.Status.CURRENT, current.status());
         assertNull(newer.error()); assertEquals(Versions.Status.UPDATE, newer.status());
     }

@@ -101,6 +101,7 @@ record Failure(Failure.Kind kind, String detail, long retryAfterSeconds) {
     private static String providerName(String value) {
         if (value == null || value.isBlank()) return "";
         return switch (value.toLowerCase(Locale.ROOT)) {
+            case "web" -> "Web source";
             case "github" -> "GitHub";
             case "modrinth" -> "Modrinth";
             case "spigot", "spiget" -> "Spigot";

@@ -12,7 +12,7 @@ updates:
 
 ## Release selection
 
-PluginUpdateWatch checks the latest stable GitHub release.
+Stable 1.3.3 checks the latest stable release. **Starting with 1.4.0-SNAPSHOT**, the plugin selects the newest published release by `published_at` among the 100 most recent API entries, including prereleases and excluding drafts. Prereleases show a warning in reports and before downloading. The release-page link points to that exact tag.
 
 ## Direct downloads
 

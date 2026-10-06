@@ -119,7 +119,7 @@ final class Discovery {
             if (project != null && project.matches("[A-Za-z0-9_-]+")) return "https://modrinth.com/plugin/" + project;
         } catch (Exception e) { failure = e; }
         if (plugin.website() != null && !plugin.website().isBlank()) {
-            try { SourceLink.parse(plugin.website()); return plugin.website(); } catch (IllegalArgumentException ignored) { }
+            try { if (!SourceLink.parse(plugin.website()).type().equals("web")) return plugin.website(); } catch (IllegalArgumentException ignored) { }
         }
         if (failure != null) throw failure;
         return "";

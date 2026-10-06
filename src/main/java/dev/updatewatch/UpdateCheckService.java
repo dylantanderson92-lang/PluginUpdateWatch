@@ -26,7 +26,7 @@ final class UpdateCheckService {
         Map<String, Result> checked = new LinkedHashMap<>(); Map<String, Count> counts = new LinkedHashMap<>();
         for (var source : resolution.sources()) {
             if (Thread.currentThread().isInterrupted()) throw new java.io.InterruptedIOException("Check cancelled");
-            Result result = checkSource(source, fetch);
+            Result result = checkSource(source, fetch, url -> SourcePage.read(url, settings, transport));
             checked.put(source.name().toLowerCase(Locale.ROOT), result);
             Count previous = counts.getOrDefault(source.type(), new Count(0, 0));
             counts.put(source.type(), new Count(previous.success() + (result.error() == null ? 1 : 0), previous.failure() + (result.error() != null ? 1 : 0)));
@@ -34,9 +34,13 @@ final class UpdateCheckService {
         return new Report(resolution, Collections.unmodifiableMap(checked), Map.copyOf(counts), (System.nanoTime() - started) / 1_000_000);
     }
     static Result checkSource(Remote.Source source, Providers.JsonFetch fetch) {
+        return checkSource(source, fetch, url -> { throw Failure.problem(Failure.Kind.INVALID_CONFIG, "Web page fetcher is unavailable"); });
+    }
+    static Result checkSource(Remote.Source source, Providers.JsonFetch fetch, SourcePage.Fetch pages) {
         try {
-            var release = Providers.latest(source, fetch);
-            return new Result(source, release, Versions.compare(source.installed(), release.version()), null);
+            var release = source.type().equals("web") ? SourcePage.latest(source, pages, fetch) : Providers.latest(source, fetch);
+            return new Result(source, release, SourcePage.UNKNOWN_VERSION.equals(release.version()) ? Versions.Status.UNKNOWN
+                    : Versions.compare(source.installed(), release.version()), null);
         } catch (Exception e) { return new Result(source, null, null, Failure.classify(e).describe(source.type())); }
     }
     static String message(Exception e) { return Failure.classify(e).describe(null); }

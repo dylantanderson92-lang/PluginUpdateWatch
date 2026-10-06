@@ -9,8 +9,15 @@ record SourceLink(String type, String id, String asset) {
         URI uri = URI.create(value.trim());
         if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null
                 || (uri.getPort() != -1 && uri.getPort() != 443))
-            throw new IllegalArgumentException("Use an HTTPS Modrinth, Spigot or GitHub project link");
+            throw new IllegalArgumentException("Use an HTTPS project page or direct download link");
         String host = uri.getHost().toLowerCase(Locale.ROOT);
+        if (java.util.Set.of("modrinth.com", "spigotmc.org", "github.com").stream().anyMatch(h -> host.startsWith(h + ".") || host.startsWith("www." + h + ".")))
+            throw new IllegalArgumentException("Provider lookalike hostname rejected");
+        boolean known = java.util.Set.of("modrinth.com", "www.modrinth.com", "spigotmc.org", "www.spigotmc.org", "github.com").contains(host);
+        if (!known || (host.equals("github.com") && uri.getPath().matches("/[^/]+/[^/]+/wiki(?:/.*)?"))) {
+            try { return new SourceLink("web", HttpTransport.webUri(uri.toString().split("#", 2)[0]).toString(), ".*\\.jar"); }
+            catch (java.io.IOException e) { throw new IllegalArgumentException("Use a public HTTPS source page or direct download URL", e); }
+        }
         if (uri.getRawPath().contains("%") || uri.getPath().contains("\\") || uri.getPath().contains("//")
                 || java.util.Arrays.stream(uri.getPath().split("/")).anyMatch(p -> p.equals(".") || p.equals("..")))
             throw new IllegalArgumentException("Source paths must not contain encoded or relative segments");

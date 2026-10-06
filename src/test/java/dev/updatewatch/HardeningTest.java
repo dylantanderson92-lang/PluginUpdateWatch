@@ -44,7 +44,7 @@ class HardeningTest {
     @Test void githubChecksumIsExtractedAndVerified() throws Exception {
         String hash = "a".repeat(64);
         var source = new Remote.Source("Example", "1", "github", "owner/repo", ".*\\.jar", "26.3");
-        var release = Providers.latest(source, u -> JsonParser.parseString("{\"tag_name\":\"2\",\"assets\":[{\"name\":\"a.jar\",\"browser_download_url\":\"https://github.com/o/r/releases/download/2/a.jar\",\"digest\":\"sha256:" + hash + "\"}]}"));
+        var release = Providers.latest(source, u -> GithubReleaseTest.list("{\"tag_name\":\"2\",\"assets\":[{\"name\":\"a.jar\",\"browser_download_url\":\"https://github.com/o/r/releases/download/2/a.jar\",\"digest\":\"sha256:" + hash + "\"}]}"));
         assertEquals(hash, release.sha256());
         assertEquals("a.jar", release.filename());
         var file = temp.resolve("a"); Files.writeString(file, "test");

@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.util.Locale;
 
 final class Versions {
-    enum Status { CURRENT, UPDATE, DIFFERENT }
+    enum Status { CURRENT, UPDATE, DIFFERENT, UNKNOWN }
     static String normalize(String v) {
         return v.trim().toLowerCase(Locale.ROOT).replaceFirst("^v(?=\\d)", "").split("\\+", 2)[0];
     }

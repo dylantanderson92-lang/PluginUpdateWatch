@@ -31,7 +31,8 @@ class ModrinthTest {
         versions.add(version("8.0", "2026-09-25T00:00:00Z", "paper", "26.3", "release"));
         versions.add(version("7.0", "2026-09-25T00:00:00Z", "paper", "1.21.11", "beta"));
         versions.add(version("1.5", "2026-09-19T00:00:00Z", "bukkit", "1.21.11", "release"));
-        assertEquals("2.0", Modrinth.select(versions, source).version());
+        assertEquals("7.0", Modrinth.select(versions, source).version());
+        assertEquals(ReleaseType.BETA, Modrinth.select(versions, source).type());
     }
     @Test void noCompatibleVersionIsNotReportedCurrent() {
         assertThrows(IOException.class, () -> Modrinth.select(new JsonArray(), source));
@@ -66,5 +67,15 @@ class ModrinthTest {
         JsonObject v = stable(); v.getAsJsonArray("files").get(0).getAsJsonObject().remove("hashes");
         JsonArray versions = new JsonArray(); versions.add(v);
         assertThrows(IOException.class, () -> Modrinth.select(versions, source));
+    }
+    @Test void newerAlphaIsSelectedButHiddenAndWrongGameBuildsAreExcluded() throws Exception {
+        JsonArray versions = new JsonArray(); versions.add(stable());
+        versions.add(version("3-alpha", "2026-10-01T00:00:00Z", "paper", "1.21.11", "alpha"));
+        var hidden = version("4-alpha", "2026-10-02T00:00:00Z", "paper", "1.21.11", "alpha");
+        hidden.addProperty("status", "unlisted"); versions.add(hidden);
+        versions.add(version("5-alpha", "2026-10-03T00:00:00Z", "paper", "26.3", "alpha"));
+        var result = Modrinth.select(versions, source);
+        assertEquals("3-alpha", result.version()); assertEquals(ReleaseType.ALPHA, result.type());
+        assertTrue(result.type().message().contains("[WARNING]"));
     }
 }
