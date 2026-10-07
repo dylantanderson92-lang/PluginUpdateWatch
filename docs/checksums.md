@@ -1,6 +1,6 @@
 # Checksums & Download Security
 
-Checksums are required by default for standard provider entries. The 1.4.0-SNAPSHOT preview adds a separate exception for explicitly configured web sources; see below.
+Checksums are required by default for standard provider entries. Version 1.4.0 adds a separate exception for explicitly configured web sources; see below.
 
 ```yaml
 downloads:
@@ -47,6 +47,6 @@ The download is still subject to HTTPS and archive validation and is clearly rep
 
 A provider checksum detects corruption. It is not an independent publisher signature or malware scan.
 
-## Web sources (1.4 preview)
+## Web sources (1.4.0+)
 
 `downloads.allow-unverified-web: true` defaults to allowing a missing checksum for explicit web source entries only. Warnings appear before and after downloading; plugin identity, JAR structure, filenames, HTTPS and size/time limits are still checked. Set this option to `false` with `downloads.require-checksum: true` to require checksums for web sources too. A supplied invalid or mismatched checksum always rejects the file. See [web sources](sources/web.md).

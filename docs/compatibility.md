@@ -27,6 +27,14 @@ The documented live test environments include:
 | Paper 1.21.11 build 132 | Java 21 |
 | Paper 26.3 build 41 alpha | Java 25 |
 
+## 1.4.0 verification
+
+The release passed Maven `clean verify` on Java 21 and Java 25. The final development regression suite contained **128 passing tests**, including the reported Plan/LuckPerms/DoubleDoors version aliases, notification eligibility and download freshness checks.
+
+The corrected 1.4.0 development JAR passed isolated startup, scan/check/list/reload, web-download and strict-web-checksum checks on both Paper environments above. Upstream downloads were validated and saved, not installed or executed. These development checks are distinct from byte-for-byte live testing of the published stable JAR.
+
+The published 1.4.0 JAR downloaded from Spigot matches the GitHub release SHA-256. See the [build report](https://github.com/dylantanderson92-lang/PluginUpdateWatch/blob/main/BUILD-REPORT.md) for artifact evidence and the earlier development verification scope.
+
 ## 1.3.3 verification
 
 The final local stable JAR passed the checks listed below on both documented Paper environments. It also passed bStats local/global opt-out, reload without duplicate clients, opt-out thread shutdown and normal server shutdown checks. The unit suite contains **95 tests**; PR/release CI runs on Java 21 and 25.

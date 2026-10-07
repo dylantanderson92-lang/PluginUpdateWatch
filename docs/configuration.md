@@ -27,6 +27,7 @@ downloads:
   max-size-mib: 100
   timeout-seconds: 120
   require-checksum: true
+  allow-unverified-web: true
 
 updates: []
 
@@ -99,6 +100,7 @@ downloads:
   max-size-mib: 100
   timeout-seconds: 120
   require-checksum: true
+  allow-unverified-web: true
 ```
 
 Supported limits:
@@ -107,6 +109,10 @@ Supported limits:
 | --- | --- |
 | `max-size-mib` | 1–1024 |
 | `timeout-seconds` | 1–1800 |
+
+`require-checksum` defaults to `true`, including when omitted from an older configuration. Standard provider downloads without a supported checksum are blocked unless this is explicitly set to `false`.
+
+`allow-unverified-web` defaults to `true`, including when omitted. It permits missing checksums only for explicitly configured web sources, with warnings before and after downloading. Set it to `false` while keeping `require-checksum: true` to require checksums for web sources too. Neither option bypasses a supplied invalid or mismatched checksum, HTTPS checks or JAR validation. See [Checksums & Security](checksums.md).
 
 ## Usage metrics
 

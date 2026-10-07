@@ -19,7 +19,7 @@ Choose the normal `PluginUpdateWatch-<version>.jar` from the release's **Assets*
 ## Install
 
 1. Stop the Minecraft server.
-2. Download [PluginUpdateWatch-1.3.3.jar](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.3.3/PluginUpdateWatch-1.3.3.jar).
+2. Download [PluginUpdateWatch-1.4.0.jar](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.4.0/PluginUpdateWatch-1.4.0.jar).
 3. Place the JAR in the server's `plugins` folder.
 4. Start the server.
 5. PluginUpdateWatch creates its configuration folder and begins a scan after startup.

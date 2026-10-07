@@ -148,7 +148,7 @@ Targets Paper **1.21.11–26.3**, using Java 21 bytecode and no server internals
 | Published 1.3.0, Java 21 and 25 CI | 72 tests passed; see [the CI run](https://github.com/dylantanderson92-lang/PluginUpdateWatch/actions/runs/36248215330) |
 | Published 1.3.0 JAR, live Paper 1.21.11 build 132 / Java 21 and 26.3 build 41 alpha / Java 25 | Startup, scan/check/list/reload, real Modrinth download and missing-checksum rejection passed with evidence |
 | 1.3.3 verification | 95 local tests passed; the final local stable JAR passed live update/download/integrity/cleanup and bStats lifecycle checks on both Paper builds above. PR/release CI runs on Java 21 and 25. |
-| 1.4.0 verification | 95+ local tests passed; release includes web sources, quieter console reports and prerelease selection. Full CI and live verification results are recorded in build and live test reports. |
+| 1.4.0 verification | 128 regression tests passed on Java 21 and 25 in final development verification; the stable release also passed Java 21/25 Maven verification. Development live-test scope and published artifact evidence are recorded in [BUILD-REPORT.md](BUILD-REPORT.md). |
 
 Existing jar/source and legacy `plugins:` entries remain valid without migration. The deliberate safety change is that an **omitted** checksum setting now requires checksums; administrators wanting the earlier behavior should explicitly set `downloads.require-checksum: false`.
 

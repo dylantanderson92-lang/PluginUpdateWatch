@@ -75,6 +75,20 @@ downloads:
 
 Then run `/pu reload`.
 
+For explicit web sources, `downloads.allow-unverified-web: true` permits a missing checksum by default. If you set this to `false` with `require-checksum: true`, a web source without a checksum is also blocked. A supplied invalid or mismatched checksum is always rejected; do not disable validation to work around a mismatch.
+
+## A download is identical, older, or only available for inspection
+
+Version 1.4.0 normalizes known build/platform labels and only notifies for confirmed newer versions. Plan `5.8 build 3638` and `5.8+build.3638`, for example, are the same build.
+
+Run `/pu scan` after installing or renaming a plugin JAR so the cached installed metadata is refreshed. If a download is rejected as identical or stale, review the source's release and the downloaded artifact it advertises. A fixed artifact URL may keep returning the same file; update it or use an appropriate project/download page. Repeating the download cannot make that file newer.
+
+**Download for inspection** means version order is uncertain. A different snapshot with the same version label may contain changes, but the plugin does not claim it is newer. Generic filenames can also remain unchanged for genuine updates; review the descriptor version and publisher's release notes.
+
+## Current plugins are missing from console output
+
+This is intentional in 1.4.0 and later. Console/RCON reports hide current plugins and deliberately disabled informational entries. In-game `/pu list` still shows the full report. Updates, unknown web downloads, errors and configuration warnings remain visible.
+
 ## Config error
 
 Correct the affected entry in `config.yml` and run:

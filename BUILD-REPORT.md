@@ -1,3 +1,15 @@
+# Published release and documentation verification — 1.4.0
+
+Checked 7 October 2026 (Pacific/Auckland).
+
+- Release commit: `0717544c8f96a6d6b9df1dd33c2365c8e4cc1606`.
+- [Release workflow](https://github.com/dylantanderson92-lang/PluginUpdateWatch/actions/runs/37477465886) passed Java 21 and Java 25 verification and published the verified artifact. The separate [main build](https://github.com/dylantanderson92-lang/PluginUpdateWatch/actions/runs/37477167644) also passed both Java jobs.
+- The GitHub release JAR, its `.sha256` file and the JAR downloaded from Spigot all match SHA-256 `26c07085c9c2e0d4d2f072e83b3213b17638e9feb4c844882a5246212ab1c5f7`. The packaged descriptor reports version `1.4.0` and API floor `1.21.11`.
+- Updated the wiki's current version, download/build examples, stable feature descriptions, web checksum setting, compatibility scope and troubleshooting. `mkdocs build --strict` passed with the same MkDocs Material version (`9.7.7`) used for deployment; no plugin code or release artifact was changed.
+- Live results below apply to the identified development JARs. This publication audit does not claim a new live test of the exact stable JAR.
+
+---
+
 # False-update regression verification — 1.4.0-SNAPSHOT
 
 Checked 7 October 2026 (Pacific/Auckland).

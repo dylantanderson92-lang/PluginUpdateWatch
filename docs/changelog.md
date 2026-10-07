@@ -1,6 +1,8 @@
 # Changelog
 
-## 1.4.0-SNAPSHOT (unreleased preview)
+## 1.4.0
+
+[Release and downloads](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.4.0). Existing 1.3.x configurations remain supported; keep the configuration folder when upgrading.
 
 - Fix false alerts for Plan numbered-build labels, LuckPerms' Bukkit suffix and DoubleDoors' Paper prefix.
 - Notify only for confirmed newer versions; label ambiguous downloads as inspection only.
