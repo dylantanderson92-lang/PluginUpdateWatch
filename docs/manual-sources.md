@@ -31,6 +31,16 @@ updates:
     source: "https://github.com/owner/repository"
 ```
 
+## HTTPS web page or direct download
+
+```yaml
+updates:
+  - jar: "Geyser-Spigot.jar"
+    source: "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot"
+```
+
+A public HTTPS wiki/project page can also be supplied. See [Web sources](sources/web.md) for page handling, Geyser/Floodgate examples, fixed artifact URLs and checksum warnings. Add these rows to the same `updates:` list as other providers.
+
 Use the **exact installed filename**, including `.jar`.
 
 You do not need to add:

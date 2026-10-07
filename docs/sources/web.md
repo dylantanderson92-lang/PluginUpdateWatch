@@ -1,6 +1,6 @@
 # Web pages and direct downloads
 
-Available in **1.4.0-SNAPSHOT**, an unreleased preview.
+Available in **1.4.0 and later**.
 
 Manual entries still need only the exact installed JAR filename and an HTTPS source URL. For example:
 

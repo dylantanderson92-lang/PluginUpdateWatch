@@ -7,19 +7,20 @@ Supported update sources:
 - **Modrinth**
 - **Spigot / Spiget**
 - **GitHub Releases**
+- **[HTTPS web pages and direct downloads](sources/web.md)**
 
 ## Current version
 
-**PluginUpdateWatch 1.3.3**
+**PluginUpdateWatch 1.4.0**
 
 [Download PluginUpdateWatch](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/latest){ .md-button .md-button--primary }
 
-[Download the 1.3.3 JAR](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.3.3/PluginUpdateWatch-1.3.3.jar) or view the latest release above.
+[Download the 1.4.0 JAR](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.4.0/PluginUpdateWatch-1.4.0.jar) or view the latest release above.
 
 ## Quick start
 
 1. Stop your Paper server.
-2. Place `PluginUpdateWatch-1.3.3.jar` in the server's `plugins` folder.
+2. Place `PluginUpdateWatch-1.4.0.jar` in the server's `plugins` folder.
 3. Start the server.
 4. Run `/pu list` as an operator.
 5. Use `/pu scan` to retry automatic source discovery at any time.
@@ -32,6 +33,10 @@ Supported update sources:
 - Automatic plugin JAR discovery
 - Exact Modrinth SHA-512 lookup
 - Modrinth, Spigot and GitHub update checks
+- Explicit HTTPS wiki/project pages and direct download sources
+- Latest published releases, including prereleases, with release-type warnings
+- Quiet console reports and conservative update notifications
+- Version comparison and download freshness checks to reduce false alerts
 - Manual source configuration using only a JAR filename and source link
 - Config cleanup with backups
 - Download checksum verification

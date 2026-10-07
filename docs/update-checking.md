@@ -32,6 +32,14 @@ A provider error is not treated as "up to date".
 
 When no compatible release is found, update status is reported as unknown and the release/source should be reviewed.
 
+## Results and notifications
+
+Only a confirmed newer version triggers update/join notifications. Equivalent version formats are treated as current; an ambiguous difference or an unknown web version does not prove that an update exists. Such downloads may be offered for inspection instead. See [Downloading Updates](downloads.md).
+
+In 1.4.0 and later, console/RCON reports omit current plugins and intentionally disabled informational entries. Updates, unknown web downloads, failed checks and configuration warnings remain visible. In-game `/pu list` retains the full report; a quiet console does not mean configured plugins were skipped.
+
+Modrinth and GitHub include prereleases in latest-release selection and warn about their type. Modrinth still requires a matching Minecraft version and Paper/Spigot/Bukkit loader. [Web sources](sources/web.md) must be configured explicitly and cannot always establish a version or compatibility.
+
 ## Scheduled checks
 
 The default check interval is:
