@@ -70,7 +70,7 @@ final class ConfigSources {
                 try {
                     var source = new Remote.Source(p.name(), p.version(), type, legacy.getString(type.equalsIgnoreCase("github") ? "repository"
                             : type.equalsIgnoreCase("modrinth") ? "project" : "resource-id", ""), legacy.getString("asset-regex", ".*\\.jar"), minecraft);
-                    Providers.validate(source); sources.add(source);
+                    Providers.validate(source); sources.add(source.withEnabled(p.enabled()));
                 } catch (IllegalArgumentException e) { notes.put(p.name(), "Invalid legacy config. " + Failure.classify(e).describe(type)); }
                 continue;
             }
@@ -85,7 +85,7 @@ final class ConfigSources {
                 catch (Exception e) { notes.put(p.name(), "Discovery failed: " + Failure.classify(e).describe("modrinth") + " Paste a source link for " + jar.path().getFileName() + " if discovery remains unavailable."); continue; }
             }
             if (link.isBlank()) { notes.put(p.name(), "Source not identified; paste a source link for " + jar.path().getFileName() + " in config.yml"); continue; }
-            try { sources.add(SourceLink.parse(link).source(p.name(), p.version(), minecraft)); }
+            try { sources.add(SourceLink.parse(link).source(p.name(), p.version(), minecraft).withEnabled(p.enabled())); }
             catch (Exception e) { notes.put(p.name(), "Invalid source link for " + jar.path().getFileName() + ": " + Failure.classify(e).describe(null)); }
         }
         for (var entry : entries) {
@@ -96,6 +96,7 @@ final class ConfigSources {
                     && installed.stream().anyMatch(p -> Discovery.metadataMatches(j, p))))
                 notes.put("Config: " + filename, "JAR does not match an installed plugin; update the filename if it changed, or run /pu cleanup to review missing-file entries");
         }
-        return new Resolution(List.copyOf(sources), Collections.unmodifiableMap(new LinkedHashMap<>(notes)), entries.stream().map(Map::copyOf).toList());
+        return new Resolution(List.copyOf(sources), Collections.unmodifiableMap(new LinkedHashMap<>(notes)),
+                entries.stream().map(e -> Collections.unmodifiableMap(new LinkedHashMap<>(e))).toList());
     }
 }

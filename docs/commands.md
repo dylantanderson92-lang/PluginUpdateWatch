@@ -4,6 +4,7 @@ All commands use `/pu`, which is an alias of `/pluginupdates`.
 
 | Command | Description |
 | --- | --- |
+| `/pu list all` | Show the full report, including current and unconfirmed versions (1.4.1) |
 | `/pu list` | Show cached update results, unresolved plugins and configuration problems |
 | `/pu scan` | Scan installed JARs, discover sources, save config and check updates |
 | `/pu check` | Check already-known sources without retrying automatic discovery |
@@ -39,4 +40,8 @@ For `/pu download`, tab completion supplies plugin names when an available updat
 
 ## Console output in 1.4.0+
 
-Console and RCON hide successful up-to-date plugin rows and intentionally disabled informational entries. Updates, unknown web downloads, errors and configuration warnings remain visible. In-game `/pu list` keeps the full report. Alpha/beta/prerelease/development or unknown release types warn before downloading.
+Console and RCON hide successful up-to-date plugin rows and intentionally disabled informational entries. Since 1.4.1, confirmed updates, errors and configuration warnings remain visible; unconfirmed comparisons are counted in the summary. Use `/pu list all` for full console details. In-game `/pu list` keeps the full report. Alpha/beta/prerelease/development or unknown release types warn before downloading.
+
+## Compact console reports in the 1.4.1
+
+Default console/RCON reports show confirmed updates and actionable problems, with specific troubleshooting links. Unconfirmed versions are counted rather than printed individually; `/pu list all` retains full details. In-game reports remain complete. Download warnings are consolidated, and identical-file downloads mark the current cached result CURRENT until the next check.

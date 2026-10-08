@@ -68,8 +68,9 @@ final class Providers {
         String version = v.get("tag_name").getAsString();
         if (version.isBlank()) throw Failure.problem(Failure.Kind.INVALID_RESPONSE, "GitHub release has an empty version");
         String tag = java.net.URLEncoder.encode(version, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
+        ReleaseType labelType = ReleaseType.fromLabel(version);
         return new Remote.Release(version, download, "https://github.com/" + s.id() + "/releases/tag/" + tag, null, sha256, filename,
-                v.get("prerelease").getAsBoolean() ? ReleaseType.PRERELEASE : ReleaseType.STABLE);
+                v.get("prerelease").getAsBoolean() ? ReleaseType.PRERELEASE : labelType == ReleaseType.UNKNOWN ? ReleaseType.STABLE : labelType);
     }
     private static Remote.Release spigot(Remote.Source s, JsonFetch fetch) throws IOException {
         String base = "https://api.spiget.org/v2/resources/" + s.id();

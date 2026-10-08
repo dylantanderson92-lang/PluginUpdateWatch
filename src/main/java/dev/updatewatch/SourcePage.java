@@ -34,6 +34,7 @@ final class SourcePage {
         String initial;
         try { initial = HttpTransport.webUri(source.id()).toString(); }
         catch (IOException e) { throw Failure.problem(Failure.Kind.INVALID_CONFIG, "Invalid HTTPS web source", e); }
+        if (GeyserRelease.project(initial) != null) return GeyserRelease.latest(initial, pages);
         var queue = new ArrayDeque<String>(); queue.add(initial);
         var visited = new HashSet<String>();
         IOException lastFailure = null;
@@ -71,7 +72,7 @@ final class SourcePage {
                 if (link.provider() != null) {
                     if (providers++ >= 3) continue;
                     try {
-                        var release = Providers.latest(link.provider().source(source.name(), source.installed(), source.minecraft()), json);
+                        var release = Providers.latest(link.provider().source(source.name(), source.installed(), source.minecraft()).withEnabled(source.enabled()), json);
                         if (release.download() != null) return release;
                     } catch (IOException e) { lastFailure = e; }
                 } else if (filename(link.url()) != null) return unversioned(source, link.url(), initial);

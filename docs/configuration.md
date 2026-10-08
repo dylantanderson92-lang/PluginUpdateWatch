@@ -88,10 +88,10 @@ Supported limits:
 
 | Setting | Range |
 | --- | --- |
-| `connect-timeout-seconds` | 1–60 |
-| `read-timeout-seconds` | 1–120 |
-| `metadata-timeout-seconds` | 1–300 |
-| `attempts` | 1–5 |
+| `connect-timeout-seconds` | 1â€“60 |
+| `read-timeout-seconds` | 1â€“120 |
+| `metadata-timeout-seconds` | 1â€“300 |
+| `attempts` | 1â€“5 |
 
 ### Download settings
 
@@ -107,8 +107,8 @@ Supported limits:
 
 | Setting | Range |
 | --- | --- |
-| `max-size-mib` | 1–1024 |
-| `timeout-seconds` | 1–1800 |
+| `max-size-mib` | 1â€“1024 |
+| `timeout-seconds` | 1â€“1800 |
 
 `require-checksum` defaults to `true`, including when omitted from an older configuration. Standard provider downloads without a supported checksum are blocked unless this is explicitly set to `false`.
 
@@ -119,6 +119,17 @@ Supported limits:
 Version 1.3.3 adds `metrics.enabled`, defaulting to `true`. Set it to `false` and run `/pu reload` to stop this plugin reporting. See [Usage Metrics](metrics.md) for the reported data and the global bStats opt-out. Older configs without this setting default to enabled; adding the section is optional unless you want to opt out.
 
 ## Applying changes
+
+Starting with the `1.4.1` release, scans and cleanup saves insert a blank line between entries in `updates:` and legacy `plugins:` sections. Run `/pu scan` to format existing entries, even if discovery finds no new plugins. Setting values are preserved; YAML comments may be reformatted.
+
+```yaml
+updates:
+  - jar: "FirstPlugin.jar"
+    source: "https://modrinth.com/plugin/first-plugin"
+
+  - jar: "SecondPlugin.jar"
+    source: "https://github.com/owner/second-plugin"
+```
 
 After editing the configuration, run:
 

@@ -6,7 +6,11 @@ final class ReportVisibility {
         return result.error() == null && result.status() == Versions.Status.UPDATE;
     }
     static boolean result(boolean console, UpdateCheckService.Result result) {
-        return !console || result.error() != null || result.status() != Versions.Status.CURRENT;
+        return !console || result.error() != null || result.status() == Versions.Status.UPDATE;
     }
     static boolean note(boolean console, String note) { return !console || !note.startsWith("[INFO]"); }
+    static UpdateCheckService.Result afterDownload(UpdateCheckService.Result result, Failure outcome) {
+        return outcome != null && outcome.kind() == Failure.Kind.ALREADY_INSTALLED
+                ? new UpdateCheckService.Result(result.source(), result.release(), Versions.Status.CURRENT, null) : result;
+    }
 }

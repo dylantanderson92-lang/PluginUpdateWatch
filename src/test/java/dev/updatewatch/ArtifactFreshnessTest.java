@@ -31,6 +31,9 @@ class ArtifactFreshnessTest {
         Path installed = temp.resolve("installed.jar"); Files.write(installed, bytes);
         var error = assertThrows(Failure.Problem.class, () -> download("1.0-SNAPSHOT", "2.0", bytes, installed));
         assertTrue(error.getMessage().contains("byte-for-byte"));
+        var outcome = Failure.classify(error);
+        assertTrue(outcome.noUpdate()); assertTrue(outcome.describe("modrinth").startsWith("[INFO] ALREADY_INSTALLED"));
+        assertFalse(outcome.describe("modrinth").contains("PROVIDER_ERROR"));
         assertArrayEquals(bytes, Files.readAllBytes(installed));
         try (var files = Files.list(temp.resolve("downloads"))) { assertEquals(0, files.count()); }
     }
@@ -42,7 +45,10 @@ class ArtifactFreshnessTest {
         }
     }
     @Test void unknownWebSourceCannotDownloadANumericDowngrade() throws Exception {
-        assertThrows(Failure.Problem.class, () -> download("2.0", SourcePage.UNKNOWN_VERSION, jar("1.0", "old"), null));
+        var error = assertThrows(Failure.Problem.class, () -> download("2.0", SourcePage.UNKNOWN_VERSION, jar("1.0", "old"), null));
+        var outcome = Failure.classify(error);
+        assertTrue(outcome.noUpdate()); assertTrue(outcome.describe("web").startsWith("[INFO] NO_UPDATE"));
+        assertTrue(outcome.describe("web").contains("1.0")); assertTrue(outcome.describe("web").contains("2.0"));
     }
     @Test void changingSnapshotWithSameDescriptorVersionIsAllowedForExplicitInspection() throws Exception {
         Path installed = temp.resolve("installed.jar"); Files.write(installed, jar("1.0-SNAPSHOT", "old"));
@@ -53,5 +59,13 @@ class ArtifactFreshnessTest {
     @Test void genuineNewerPlanBuildIsAcceptedButOldBuildIsRejected() throws Exception {
         assertNotNull(download("5.8 build 3605", "5.8+build.3638", jar("5.8 build 3638", "new"), null));
         assertThrows(Failure.Problem.class, () -> download("5.8 build 3638", "5.8+build.3640", jar("5.8 build 3638", "same version"), null));
+    }
+    @Test void numberedPrereleaseUpdatesRejectStaleDownloads() throws Exception {
+        for (var versions : List.of(List.of("3.0.0-SNAPSHOT.88", "3.0.0-SNAPSHOT.90"), List.of("0.1.0-beta.1", "0.1.0-beta.2"))) {
+            byte[] next = jar(versions.get(1), "new");
+            Path saved = download(versions.get(0), versions.get(1), next, null);
+            assertThrows(Failure.Problem.class, () -> download(versions.get(0), versions.get(1), jar(versions.get(0), "stale"), null));
+            assertArrayEquals(next, Files.readAllBytes(saved));
+        }
     }
 }

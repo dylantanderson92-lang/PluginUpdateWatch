@@ -27,7 +27,7 @@ See [bStats' server-owner documentation](https://bstats.org/docs/server-owners) 
 
 ## Reporting delay and API
 
-bStats normally waits approximately 3–6 minutes before the first report and sends subsequent reports about every 30 minutes. The website publishes at hh:00 and hh:30, so the first dashboard data point can take **3–36 minutes after startup**. See [bStats troubleshooting](https://bstats.org/docs/troubleshooting). PluginUpdateWatch does not force immediate submissions or send historical installation data.
+bStats normally waits approximately 3â€“6 minutes before the first report and sends subsequent reports about every 30 minutes. The website publishes at hh:00 and hh:30, so the first dashboard data point can take **3â€“36 minutes after startup**. See [bStats troubleshooting](https://bstats.org/docs/troubleshooting). PluginUpdateWatch does not force immediate submissions or send historical installation data.
 
 The public, read-only API can be used for a separate report or dashboard:
 

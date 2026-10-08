@@ -23,7 +23,7 @@ final class ConfigCleanup {
         }
         if (missing.isEmpty()) return new Plan(contents, contents, List.of());
         config.set("updates", keep);
-        return new Plan(contents, config.saveToString(), List.copyOf(missing));
+        return new Plan(contents, ConfigManager.serialize(config), List.copyOf(missing));
     }
     static Path apply(Path configFile, Path pluginsFolder, Plan preview) throws Exception {
         Plan current = plan(Files.readString(configFile), pluginsFolder);

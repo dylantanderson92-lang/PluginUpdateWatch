@@ -1,3 +1,73 @@
+# Stable release preparation - 1.4.1
+
+Checked 9 October 2026 (Pacific/Auckland).
+
+- The server owner reported a successful live Paper 26.3 test of the final 1.4.1 preview and authorized stable release publication.
+- Stable source changes only version metadata and documentation; runtime behavior matches the tested preview. Java 21 and Java 25 each passed 166 checks (165 unit tests and one packaged-JAR integration test), with zero failures/errors/skips. Strict MkDocs verification passed.
+- Stable Java 21 artifact SHA-256: `5206d95578f142a683e32f34b54ce9c2972a228f63a7c158dd7f9a9128901de9`.
+- Stable downloads, command documentation and wiki troubleshooting now document 1.4.1. Prior artifact-specific verification remains recorded below.
+
+---
+
+# Compact console reports and troubleshooting - 1.4.1-SNAPSHOT
+
+Checked 9 October 2026 (Pacific/Auckland).
+
+- Java 21 and Java 25 `mvn clean verify`: **166 checks passed on each runtime** (165 unit tests plus one packaged-JAR integration test), zero failures/errors/skips.
+- Six new tests cover compact missing-source messages, classified failures and wiki routing, confirmed update actions/checksum restrictions, consolidated download warnings, identical-download cache replacement and truthful summaries. Updated visibility tests ensure UNKNOWN/DIFFERENT remain available in full reports but do not masquerade as confirmed updates.
+- The exact Java 21 artifact passed isolated Paper 26.3 / Java 25 startup, scan/check/list/list all/reload, confirmed update display, CURRENT and uncertain console suppression, full-report retention, troubleshooting links, current download refusal and config-save stability. Real Modrinth fixtures exercised compatibility warnings. The server exited normally; original test configs/JARs were restored. Production was not changed.
+- Strict MkDocs build passed; all 14 troubleshooting anchors referenced by the new message helpers exist in the generated page. Links become available on the public wiki when these docs are merged/deployed.
+- An identical download marks only its still-current cached result CURRENT; a fresh check reevaluates the source. Generic mutable URLs are not permanently considered current. Downloaded newer files are not confused with installed updates.
+
+Snapshot SHA-256: `72b7e854a964851c3cbaf9ff180c486fc5d24a75f7a8ee8b33981d3c5c388fc0`.
+
+---
+
+# Identical-artifact and official build metadata verification — 1.4.1-SNAPSHOT
+
+Checked 8 October 2026 (Pacific/Auckland), after the production download attempts at 14:36–14:38.
+
+- Java 21 and Java 25 `mvn clean verify`: **160 checks passed on each runtime** (159 unit tests plus one packaged-JAR integration test), zero failures/errors/skips.
+- Eleven new tests cover identical/different/malformed provider digests, missing/ambiguous/replaced installed JARs, SHA-256 and multi-digest matching, official build metadata, pinned URLs, default-channel downgrades, malformed responses, rate limits and endpoint scope. Existing download tests now assert informational duplicate/non-newer outcomes while still ensuring stale files are rejected and previous downloads preserved.
+- Modrinth's advertised BedrockEssentials `0.1.0-beta.2` asset is named `BedrockEssentials-0.1.0-beta.1.jar` and its SHA-512 matched the original installed file. A read-only invocation of the new checker against production JARs and live APIs returned CURRENT with no error for BedrockEssentials, Geyser-Spigot and floodgate.
+- Geyser's selected default endpoint reported version `2.11.3`, build `1249`, versus installed `2.12.0-SNAPSHOT`. Floodgate reported `2.2.5`, build `141`, with SHA-256 matching the installed file. Both pinned Spigot download URLs returned HTTP 200 and a ZIP signature. No production plugin was downloaded into place, executed or restarted during these diagnostics.
+- The exact Java 21 JAR below passed isolated Paper 26.3 build 41 / Java 25 startup, scan/check/list/reload, current suppression/download refusal, real Modrinth compatibility warning and repeated config-save stability checks. Test metrics were globally opted out; the server exited with code 0 and its previous configs/JARs were restored. Prior live 1.21.11 results below apply to their separately identified artifacts.
+- Generic web sources still cannot establish current/newer status without metadata. This change neither suppresses provider failures nor disables checksum/JAR validation. No persistent assumption is made about mutable download URLs: available provider digests are checked again on each scan/check.
+
+Snapshot SHA-256: `4a9cca0838696e9b351f7441442a071ff2d29066cb27c9c54d146823288f02eb`.
+
+---
+
+# Console/config follow-up — 1.4.1-SNAPSHOT
+
+Checked 8 October 2026 (Pacific/Auckland), after the 14:17 console report.
+
+- Java 21 and Java 25 `mvn clean verify`: **149 checks passed on each runtime** (148 unit tests and one final-JAR integration test), zero failures/errors/skips.
+- Nine added tests cover the reported encoded Spigot titles, malicious/invalid encodings, exact Geyser project page routing, unrelated URLs, numbered snapshot/beta ordering, genuinely ambiguous labels, GitHub development warnings, stale prerelease downloads and preservation of config row key order across scans.
+- The configured Spigot IDs `124687` and `75097` returned HTTP 200 with versions `1.1.7` and `1.35.24`. Both official Geyser/Floodgate Spigot endpoints returned HTTP 200 and a ZIP signature. These probes did not install or execute downloaded upstream code.
+- The final Java 21 follow-up JAR passed isolated Paper 26.3 build 41 / Java 25 startup, scan/check/list/reload, current download refusal, real Modrinth missing-label warnings and repeated config-save stability. The server exited with code 0 and its prior config/JARs were restored. The earlier two-version live evidence below identifies a different artifact; it is not claimed as a live test of this exact follow-up JAR on 1.21.11.
+- Production config was read for diagnosis, not edited. Fixed Essentials artifact links and custom/unnumbered version labels remain inspection/uncertain results. No source is guessed for local plugins with blank links.
+
+Follow-up snapshot SHA-256: `0f94abf71b9492b2781937c775ac468ae66c15bc5c150d57f1ab2a0ed5341b33`.
+
+---
+
+# Enabled-plugin compatibility and config formatting — 1.4.1-SNAPSHOT
+
+Checked 8 October 2026 (Pacific/Auckland). Unreleased preview based on main `952b09f6624a336a283a4477fffa3f7bfeab8d5b`.
+
+- Java 21 and Java 25 Maven `clean verify`: **140 checks passed on each runtime** (139 unit tests plus one final-JAR integration test), zero failures, errors or skipped tests.
+- Eight compatibility tests cover enabled/current/newer/older versions, newest releases without Minecraft labels, loader/status filtering, disabled-plugin strict filtering, matching-label warnings, provider failures and propagation through modern/legacy config.
+- Three formatting tests cover blank lines between modern and legacy plugin entries, multiline values, repeated serialization, concurrent-edit protection and cleanup backups.
+- The packaged-JAR test verifies relocation of bStats, Gson and jsoup and constructs the relocated bStats client with reporting disabled and its own relocation guard enabled. This catches the missing relocation in the published 1.4.0 POM. CI now retains both unit and integration test reports.
+- The exact Java 21 artifact passed isolated Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25 startup, scan/check/list/reload, config spacing and repeated-save stability checks. Enabled fixture plugins queried the real GPTitle Modrinth project: the newer result displayed its missing-26.3-label warning; the current fixture stayed out of console output and its download was refused. bStats construction succeeded with global reporting opted out. Both servers exited with code 0; their prior config/JARs were restored.
+- These fixture checks verify PluginUpdateWatch behavior, not GPTitle's runtime compatibility. No new upstream artifact was installed or executed. Production DylyCraft was not modified or restarted. Full in-game warning rendering is covered by result/visibility assertions, not a connected player session.
+- `mkdocs build --strict` passed. Documentation marks the changed policy as a 1.4.1 preview; stable download links remain at 1.4.0.
+
+Tested snapshot SHA-256: `e1c6e2f7907da3efc592fac9318be888c6b8e41f30334e5d6a0bf21b3c7edd2e`.
+
+---
+
 # Published release and documentation verification — 1.4.0
 
 Checked 7 October 2026 (Pacific/Auckland).

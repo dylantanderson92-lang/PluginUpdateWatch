@@ -3,7 +3,7 @@
 PluginUpdateWatch targets Paper:
 
 ```text
-1.21.11–26.3
+1.21.11â€“26.3
 ```
 
 Its `plugin.yml` declares:
@@ -26,6 +26,10 @@ The documented live test environments include:
 | --- | --- |
 | Paper 1.21.11 build 132 | Java 21 |
 | Paper 26.3 build 41 alpha | Java 25 |
+
+## 1.4.1 verification
+
+The stable build passed 166 checks (165 unit tests and one packaged-JAR integration test) on both Java 21 and Java 25. The server owner confirmed successful live Paper 26.3 testing of the final preview. The stable artifact also passed isolated Paper 26.3 command verification. Earlier 1.21.11 artifact-specific evidence remains in the build report.
 
 ## 1.4.0 verification
 

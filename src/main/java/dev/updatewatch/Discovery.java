@@ -10,7 +10,9 @@ import java.util.jar.JarFile;
 
 final class Discovery {
     static final int MAX_DESCRIPTOR_BYTES = 1024 * 1024;
-    record Installed(String name, String version, String website) {}
+    record Installed(String name, String version, String website, boolean enabled) {
+        Installed(String name, String version, String website) { this(name, version, website, false); }
+    }
     record Jar(Path path, String name, String version) {}
     record Inventory(List<Jar> jars, Map<String, String> notes) {
         Inventory {

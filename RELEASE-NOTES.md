@@ -1,3 +1,24 @@
+# PluginUpdateWatch 1.4.1
+
+Download PluginUpdateWatch-1.4.1.jar from Assets. Stop the server, replace the old PluginUpdateWatch JAR, keep the configuration folder, then restart. No config migration is required. The tested preview passed the server owner's live Paper 26.3 test; stable verification passed 166 checks on Java 21 and Java 25.
+
+- compact console/RCON reports show confirmed updates and actionable problems; `/pu list all` exposes current/unconfirmed rows without falsely classifying uncertain versions as current.
+- consolidate download warnings, link specific troubleshooting topics, and mark an identical-file download CURRENT in its cached report until the next check.
+
+- Compare provider checksums against original installed JARs before advertising an update. Identical files are CURRENT even when release labels differ, fixing the reported BedrockEssentials beta.1/beta.2 false alert.
+- Read Geyser/Floodgate build metadata and SHA-256 checksums for official latest Spigot links. Pin downloads to the checked build, suppress identical files and avoid offering older core versions over installed development builds.
+- Report duplicate/non-newer downloads as informational outcomes with no replacement saved, rather than provider errors with retry instructions.
+- Accept Spigot resource titles with encoded Unicode emoji/punctuation while still rejecting encoded ASCII path separators, traversal and invalid UTF-8.
+- Resolve the official Geyser/Floodgate project download pages to their Spigot download endpoints instead of unrelated GitHub footer links.
+- Compare explicit numeric snapshot/beta/alpha/RC counters within a channel and numeric core changes for recognized development versions. Unnumbered/custom build labels remain uncertain. Warn for GitHub development tags even when the publisher does not mark them prereleases.
+- Enabled plugins are checked against the newest listed Modrinth Paper/Spigot/Bukkit release even without a matching Minecraft-version label. Equal/newer installed versions remain CURRENT; newer releases carry a compatibility warning when needed. Disabled plugins retain strict game-version filtering. Failed checks remain errors.
+- Scans and cleanup saves separate plugin config entries with blank lines. Run `/pu scan` to format an existing config; settings are preserved.
+- Preserve the existing order of fields within config entries across repeated scans.
+- Restore dependency relocation to fix bStats startup in the packaged JAR. Add a final-artifact regression test.
+- No configuration migration is required. Enabled status proves startup only, not full functionality or compatibility of a new release. Download validation is unchanged.
+
+---
+
 # PluginUpdateWatch 1.4.0
 
 Download **PluginUpdateWatch-1.4.0.jar** from Assets. Stop the server, replace the older PluginUpdateWatch JAR, keep the configuration folder, then restart.

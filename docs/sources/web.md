@@ -2,6 +2,8 @@
 
 Available in **1.4.0 and later**.
 
+The **1.4.1** also recognizes the official `https://geysermc.org/download?project=geyser` and `https://geysermc.org/download?project=floodgate` pages (with or without the trailing slash before `?`) and the two latest Spigot endpoints below. It reads the official build metadata, compares the version and SHA-256 against the original installed JAR, and pins downloads to that checked build with checksum verification. Identical installed files are CURRENT despite differing descriptor/release labels. A newer installed development version is not replaced by an older version from the default endpoint. This follows the selected endpoint; it does not search every development branch. Unorderable versions with different files remain inspection downloads. Invalid build metadata is an error, not a fallback to an unchecked download.
+
 Manual entries still need only the exact installed JAR filename and an HTTPS source URL. For example:
 
 ```yaml

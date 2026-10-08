@@ -13,7 +13,7 @@ import org.bukkit.configuration.InvalidConfigurationException;
 record Failure(Failure.Kind kind, String detail, long retryAfterSeconds) {
     enum Kind {
         NETWORK, RATE_LIMIT, PROVIDER_DENIED, PROVIDER_ERROR, INVALID_CONFIG,
-        INVALID_RESPONSE, INVALID_ARTIFACT, NO_COMPATIBLE_RELEASE, IO, CANCELLED, UNEXPECTED
+        INVALID_RESPONSE, INVALID_ARTIFACT, NO_COMPATIBLE_RELEASE, ALREADY_INSTALLED, NO_NEWER_ARTIFACT, IO, CANCELLED, UNEXPECTED
     }
 
     /** Call sites supply a controlled description, never a remote response body or URL. */
@@ -74,12 +74,17 @@ record Failure(Failure.Kind kind, String detail, long retryAfterSeconds) {
             case IO -> "FILE_ERROR";
             case CANCELLED -> "CANCELLED";
             case UNEXPECTED -> "INTERNAL_ERROR";
+            case ALREADY_INSTALLED -> "ALREADY_INSTALLED";
+            case NO_NEWER_ARTIFACT -> "NO_UPDATE";
             default -> "PROVIDER_ERROR";
         };
-        String prefix = kind == Kind.NO_COMPATIBLE_RELEASE || kind == Kind.CANCELLED ? "[WARNING]" : "[ERROR]";
+        String prefix = noUpdate() ? "[INFO]" : kind == Kind.NO_COMPATIBLE_RELEASE || kind == Kind.CANCELLED ? "[WARNING]" : "[ERROR]";
         String source = providerName(provider);
-        return prefix + " " + category + (source.isEmpty() ? "" : " | " + source) + ": " + safe(detail) + ". " + action();
+        return prefix + " " + category + (source.isEmpty() ? "" : " | " + source) + ": " + safe(detail) + ". " + action()
+                + " Help: " + Troubleshooting.failure(kind);
     }
+
+    boolean noUpdate() { return kind == Kind.ALREADY_INSTALLED || kind == Kind.NO_NEWER_ARTIFACT; }
 
     private String action() {
         return switch (kind) {
@@ -92,6 +97,8 @@ record Failure(Failure.Kind kind, String detail, long retryAfterSeconds) {
             case INVALID_RESPONSE -> "Check the provider release page; retry /pu check later or report a repeated malformed response.";
             case INVALID_ARTIFACT -> "Download was rejected. Check the publisher's release and checksum before trying again.";
             case NO_COMPATIBLE_RELEASE -> "Check the source link and supported Minecraft versions on the release page; update status is unknown.";
+            case ALREADY_INSTALLED -> "Keep the installed plugin. A different release label alone does not make this file an update.";
+            case NO_NEWER_ARTIFACT -> "Keep the installed plugin. Review the selected source or release channel before downloading again.";
             case IO -> "Check disk space and server file permissions, then retry the operation.";
             case CANCELLED -> "Run /pu check after the reload or restart completes.";
             case UNEXPECTED -> "Review server diagnostics and report this failure if it repeats.";

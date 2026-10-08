@@ -9,10 +9,10 @@ class ReportVisibilityTest {
             assertEquals(status == Versions.Status.UPDATE, ReportVisibility.confirmedUpdate(new UpdateCheckService.Result(null, null, status, null)));
         assertFalse(ReportVisibility.confirmedUpdate(new UpdateCheckService.Result(null, null, Versions.Status.UPDATE, "Provider failed")));
     }
-    @Test void consoleSuppressesCurrentButPreservesEveryActionableResult() {
+    @Test void consoleShowsConfirmedUpdatesAndErrorsWhileFullReportsRetainUnconfirmedResults() {
         for (var status : Versions.Status.values()) {
             var result = new UpdateCheckService.Result(null, null, status, null);
-            assertEquals(status != Versions.Status.CURRENT, ReportVisibility.result(true, result));
+            assertEquals(status == Versions.Status.UPDATE, ReportVisibility.result(true, result));
             assertTrue(ReportVisibility.result(false, result));
         }
         assertTrue(ReportVisibility.result(true, new UpdateCheckService.Result(null, null, null, "[ERROR] NETWORK_ERROR")));

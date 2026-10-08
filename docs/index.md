@@ -11,16 +11,16 @@ Supported update sources:
 
 ## Current version
 
-**PluginUpdateWatch 1.4.0**
+**PluginUpdateWatch 1.4.1**
 
 [Download PluginUpdateWatch](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/latest){ .md-button .md-button--primary }
 
-[Download the 1.4.0 JAR](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.4.0/PluginUpdateWatch-1.4.0.jar) or view the latest release above.
+[Download the 1.4.1 JAR](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/download/v1.4.1/PluginUpdateWatch-1.4.1.jar) or view the latest release above.
 
 ## Quick start
 
 1. Stop your Paper server.
-2. Place `PluginUpdateWatch-1.4.0.jar` in the server's `plugins` folder.
+2. Place `PluginUpdateWatch-1.4.1.jar` in the server's `plugins` folder.
 3. Start the server.
 4. Run `/pu list` as an operator.
 5. Use `/pu scan` to retry automatic source discovery at any time.
@@ -46,6 +46,6 @@ Supported update sources:
 
 ## Compatibility
 
-PluginUpdateWatch targets Paper **1.21.11–26.3** and uses Java 21 bytecode.
+PluginUpdateWatch targets Paper **1.21.11Ã¢â‚¬â€œ26.3** and uses Java 21 bytecode.
 
 See [Compatibility](compatibility.md) for the exact verification scope.

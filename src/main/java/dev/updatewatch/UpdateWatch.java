@@ -89,6 +89,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         }
     }
     private void tell(CommandSender sender, String message) {
+        if (message.contains("[WARNING]") || message.contains("[ERROR]")) message = Troubleshooting.help(message);
         NamedTextColor color = message.contains("[ERROR]") ? NamedTextColor.RED
                 : message.contains("[WARNING]") ? NamedTextColor.YELLOW : NamedTextColor.GRAY;
         sender.sendMessage(Component.text("[Updates] ", NamedTextColor.AQUA).append(Component.text(message, color)));
@@ -97,7 +98,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         if (!getServer().isPrimaryThread()) throw new IllegalStateException("Check state must be accessed on the server thread");
         if (checkState.running()) { if (sender != null) tell(sender, "A check is already running."); return; }
         var installed = Arrays.stream(getServer().getPluginManager().getPlugins()).filter(p -> p != this)
-                .map(p -> new Discovery.Installed(p.getName(), p.getPluginMeta().getVersion(), p.getPluginMeta().getWebsite())).toList();
+                .map(p -> new Discovery.Installed(p.getName(), p.getPluginMeta().getVersion(), p.getPluginMeta().getWebsite(), p.isEnabled())).toList();
         String snapshot = getConfig().saveToString();
         var configFile = getDataFolder().toPath().resolve("config.yml");
         String diskSnapshot;
@@ -119,8 +120,9 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                 sync(() -> {
                     if (checkState.finish(epoch)) {
                         lastCheckFailure = "Scan/check failed: " + UpdateCheckService.message(e);
-                        tell(sender == null ? getServer().getConsoleSender() : sender, lastCheckFailure);
-                        getLogger().warning(lastCheckFailure);
+                        CommandSender recipient = sender == null ? getServer().getConsoleSender() : sender;
+                        tell(recipient, console(recipient) ? ConsoleReport.error(null, lastCheckFailure) : lastCheckFailure);
+                        if (!console(recipient)) getLogger().warning(lastCheckFailure);
                     }
                     resumePendingScan();
                 });
@@ -135,12 +137,15 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                         lastCheckFailure = "[WARNING] CONFIG_ERROR | Config changed during scan; results discarded. Run /pu reload.";
                         tell(sender == null ? getServer().getConsoleSender() : sender, lastCheckFailure); return;
                     }
-                    if (scan && !resolution.entries().equals(getConfig().getMapList("updates"))) {
+                    if (scan) {
                         var updated = ConfigManager.parse(diskSnapshot);
                         updated.set("updates", resolution.entries());
-                        ConfigManager.save(configFile, diskSnapshot, updated.saveToString());
-                        loadedConfig = updated.saveToString();
-                        reloadConfig();
+                        String formatted = ConfigManager.serialize(updated);
+                        if (!formatted.equals(diskSnapshot)) {
+                            ConfigManager.save(configFile, diskSnapshot, formatted);
+                            loadedConfig = formatted;
+                            reloadConfig();
+                        }
                     }
                 } catch (Exception e) {
                     lastCheckFailure = "Could not save discovery config. " + Failure.classify(e).describe(null);
@@ -175,15 +180,23 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         return Settings.checksumRequired(result.source(), requireChecksum, allowUnverifiedWeb);
     }
     private void show(CommandSender sender) {
-        boolean console = sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender;
+        show(sender, false);
+    }
+    private static boolean console(CommandSender sender) {
+        return sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender;
+    }
+    private void show(CommandSender sender, boolean all) {
+        boolean console = console(sender) && !all;
         if (lastCheckFailure != null) {
-            tell(sender, lastCheckFailure);
+            tell(sender, console ? ConsoleReport.error(null, lastCheckFailure) : lastCheckFailure);
             if (!results.isEmpty()) tell(sender, "[WARNING] The results below are cached from an earlier check, not a fresh update status.");
         }
         if (results.isEmpty() && discoveryNotes.isEmpty()) tell(sender, "No results yet. Use /pu scan to detect installed plugins.");
-        discoveryNotes.forEach((name, note) -> { if (ReportVisibility.note(console, note)) tell(sender, (note.contains("[ERROR]") || note.startsWith("[INFO]") ? "" : "[WARNING] ") + name + ": " + note); });
+        discoveryNotes.forEach((name, note) -> { if (ReportVisibility.note(console, note)) tell(sender, console ? ConsoleReport.note(name, note)
+                : (note.contains("[ERROR]") || note.startsWith("[INFO]") ? "" : "[WARNING] ") + name + ": " + note); });
         for (Result r : results.values()) {
             if (!ReportVisibility.result(console, r)) continue;
+            if (console) { tell(sender, ConsoleReport.result(r, checksumRequired(r))); continue; }
             if (r.error() != null) { tell(sender, r.source().name() + ": check failed - " + r.error()); continue; }
             String label = switch (r.status()) {
                 case UNKNOWN -> "[WARNING] UNKNOWN | source offers a file; no newer version or Minecraft compatibility confirmed";
@@ -193,6 +206,8 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             };
             NamedTextColor color = r.status() == Versions.Status.CURRENT ? NamedTextColor.GREEN : NamedTextColor.YELLOW;
             Component line = Component.text(r.source().name() + ": " + r.source().installed() + " -> " + r.release().version() + " - " + label, color);
+            if (r.release().compatibilityWarning() != null)
+                line = line.append(Component.text(" | " + r.release().compatibilityWarning(), NamedTextColor.YELLOW));
             if (r.status() != Versions.Status.CURRENT) {
                 line = line.append(Component.text(" | " + r.release().type().message(), r.release().type().warning ? NamedTextColor.YELLOW : NamedTextColor.GRAY));
                 line = line.append(Component.text(" [Release page]", NamedTextColor.AQUA).clickEvent(ClickEvent.openUrl(r.release().page())));
@@ -208,7 +223,10 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         long disabled = discoveryNotes.values().stream().filter(n -> n.equals("[INFO] Disabled in existing configuration")).count();
         long untracked = Arrays.stream(getServer().getPluginManager().getPlugins()).filter(p -> p != this && !results.containsKey(p.getName().toLowerCase(Locale.ROOT))
                 && !"[INFO] Disabled in existing configuration".equals(discoveryNotes.get(p.getName()))).count();
-        tell(sender, untracked + " plugin(s) not checked; " + disabled + " intentionally disabled. See messages above; manual entries need only jar and source link.");
+        if (console) tell(sender, ConsoleReport.summary(updateCount(), untracked,
+                results.values().stream().filter(r -> r.error() != null).count(),
+                results.values().stream().filter(r -> r.error() == null && (r.status() == Versions.Status.UNKNOWN || r.status() == Versions.Status.DIFFERENT)).count()));
+        else tell(sender, untracked + " plugin(s) not checked; " + disabled + " intentionally disabled. See messages above; manual entries need only jar and source link.");
     }
     private void cleanup(CommandSender sender, boolean confirm) {
         if (checkState.running()) { tell(sender, "A check is running; retry cleanup when it finishes."); return; }
@@ -235,6 +253,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         } catch (Exception e) { cleanupPreview = null; cleanupOwner = null; tell(sender, "Cleanup stopped: " + UpdateCheckService.message(e)); }
     }
     private void download(CommandSender sender, String name) {
+        boolean console = console(sender);
         String key = name.toLowerCase(Locale.ROOT);
         Result r = results.get(key);
         if (r == null || r.error() != null || r.status() == Versions.Status.CURRENT || r.release().download() == null) {
@@ -243,24 +262,33 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         if (checksumRequired(r) && !r.release().hasChecksum()) {
             String message = "[ERROR] PROVIDER_ERROR | " + r.source().type() + " supplies no checksum for " + r.source().name()
                     + ". Download blocked. Use its release page, or explicitly set downloads.require-checksum: false and /pu reload to allow an unverified download.";
-            tell(sender, message); getLogger().warning(message); return;
+            if (console) message = "[ERROR] " + r.source().name() + ": checksum missing; download blocked. Release: " + r.release().page()
+                    + ". Help: " + Troubleshooting.link("checksums");
+            tell(sender, message); if (!console) getLogger().warning(message); return;
         }
         if (!downloads.add(key)) { tell(sender, "That download is already running."); return; }
-        if (r.status() != Versions.Status.UPDATE)
-            tell(sender, "[WARNING] No newer version has been confirmed. This explicitly requested download is for inspection, not a verified upgrade.");
-        tell(sender, "Downloading " + r.source().name() + " " + r.release().version() + "...");
-        tell(sender, r.source().name() + ": " + r.release().type().message());
-        if (r.release().type().warning && !(sender instanceof ConsoleCommandSender))
-            getLogger().warning(r.source().name() + ": " + r.release().type().message());
+        if (console) tell(sender, ConsoleReport.downloadStart(r));
+        if (!console) {
+            if (r.status() != Versions.Status.UPDATE)
+                tell(sender, "[WARNING] No newer version has been confirmed. This explicitly requested download is for inspection, not a verified upgrade.");
+            tell(sender, "Downloading " + r.source().name() + " " + r.release().version() + "...");
+            tell(sender, r.source().name() + ": " + r.release().type().message());
+            if (r.release().compatibilityWarning() != null) {
+                tell(sender, r.release().compatibilityWarning());
+                getLogger().warning(r.source().name() + ": " + r.release().compatibilityWarning());
+            }
+            if (r.release().type().warning) getLogger().warning(r.source().name() + ": " + r.release().type().message());
+        }
         Settings downloadSettings = settings;
         boolean checksumRequired = checksumRequired(r);
         var downloadFolder = getDataFolder().toPath().resolve("downloads");
-        if (!r.release().hasChecksum()) {
+        if (!console && !r.release().hasChecksum()) {
             String warning = "[WARNING] " + r.source().name() + ": checksum unavailable; explicitly allowed by config. HTTPS and JAR structure will be checked, but integrity is unverified.";
             tell(sender, warning); getLogger().warning(warning);
         }
         worker.execute(() -> {
             String message;
+            Failure outcome = null;
             try {
                 var path = Remote.download(r.source(), r.release(), downloadFolder, downloadSettings, checksumRequired);
                 var descriptor = Discovery.read(path);
@@ -271,13 +299,28 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                         : "[WARNING] JAR version does not establish a newer release; this file is for inspection only. ";
                 message = (r.release().hasChecksum() ? "[INFO] Checksum verified. " : "[WARNING] Checksum unverified (explicitly allowed). ")
                         + "Saved " + path + ". Downloaded version: " + descriptor.version() + ". " + freshness + actualType.message()
+                        + (r.release().compatibilityWarning() == null ? "" : " " + r.release().compatibilityWarning())
                         + " Stop the server, replace the old plugin JAR, then restart. Check the release's Minecraft compatibility first.";
-            } catch (Exception e) { message = Failure.classify(e).describe(r.source().type()) + " Retry downloads with /pu download " + r.source().name() + " after resolving the problem."; }
+                if (console) message = ConsoleReport.downloadSaved(r, path, descriptor.version(), actualType);
+            } catch (Exception e) {
+                var failure = Failure.classify(e);
+                outcome = failure;
+                message = (console ? ConsoleReport.error(r.source().name(), failure.describe(r.source().type())) : failure.describe(r.source().type())) + (failure.noUpdate() || console ? ""
+                        : " Retry downloads with /pu download " + r.source().name() + " after resolving the problem.");
+            }
             String finalMessage = message;
+            Failure finalOutcome = outcome;
             sync(() -> {
+                if (finalOutcome != null && finalOutcome.kind() == Failure.Kind.ALREADY_INSTALLED && results.get(key) == r) {
+                    var updated = new LinkedHashMap<>(results);
+                    updated.put(key, ReportVisibility.afterDownload(r, finalOutcome));
+                    results = Collections.unmodifiableMap(updated);
+                }
                 downloads.remove(key); tell(sender, finalMessage);
-                if (finalMessage.contains("[ERROR]") || finalMessage.contains("[WARNING]")) getLogger().warning(finalMessage);
-                else getLogger().info(finalMessage);
+                if (!console) {
+                    if (finalMessage.contains("[ERROR]") || finalMessage.contains("[WARNING]")) getLogger().warning(finalMessage);
+                    else getLogger().info(finalMessage);
+                }
             });
         });
     }
@@ -285,7 +328,11 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         if (!sender.hasPermission("pluginupdatewatch.admin")) { tell(sender, "You do not have permission."); return true; }
         String sub = args.length == 0 ? "list" : args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "list" -> show(sender);
+            case "list" -> {
+                if (args.length == 1 || args.length == 0) show(sender);
+                else if (args.length == 2 && args[1].equalsIgnoreCase("all")) show(sender, true);
+                else tell(sender, "Usage: /pu list [all]");
+            }
             case "check" -> check(sender, false);
             case "scan" -> check(sender, true);
             case "download" -> { if (args.length == 2) download(sender, args[1]); else tell(sender, "Usage: /pu download <plugin>"); }
@@ -312,6 +359,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         if (!sender.hasPermission("pluginupdatewatch.admin")) return List.of();
         List<String> choices = args.length == 1 ? List.of("list", "scan", "check", "download", "cleanup", "stats", "reload")
                 : args.length == 2 && args[0].equalsIgnoreCase("cleanup") ? List.of("confirm")
+                : args.length == 2 && args[0].equalsIgnoreCase("list") ? List.of("all")
                 : args.length == 2 && args[0].equalsIgnoreCase("download") ? results.values().stream()
                 .filter(r -> r.error() == null && r.status() != Versions.Status.CURRENT && r.release().download() != null && (!checksumRequired(r) || r.release().hasChecksum())).map(r -> r.source().name()).toList() : List.of();
         String prefix = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);

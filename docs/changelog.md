@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.4.1
+
+[Release and downloads](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.4.1). Existing configurations remain supported. The server owner confirmed the tested preview works on live Paper 26.3.
+
+- compact console/RCON reports show confirmed updates and actionable problems; `/pu list all` exposes current/unconfirmed rows without falsely classifying uncertain versions as current.
+- consolidate download warnings, link specific troubleshooting topics, and mark an identical-file download CURRENT in its cached report until the next check.
+
+
+
+- Suppress false updates when a provider checksum matches the original installed JAR, even if the release label differs.
+- Use official Geyser/Floodgate build metadata, pinned build downloads and SHA-256 checksums for latest Spigot endpoints.
+- Report identical or non-newer downloads as informational outcomes instead of provider errors.
+- Accept encoded Unicode in Spigot resource titles and resolve Geyser/Floodgate project download pages to the Spigot endpoints.
+- Compare numbered snapshot/prerelease versions conservatively and warn for GitHub development tags lacking a prerelease flag.
+- Check enabled plugins against the newest listed Modrinth Paper/Spigot/Bukkit release when Minecraft-version labels are missing. Keep CURRENT reports quiet and warn before downloading an unlisted-compatibility release.
+- Keep strict game-version filtering for disabled plugins and preserve errors for failed checks.
+- Add blank lines between config entries during scans and cleanup, including existing unchanged entries.
+- Preserve config entry field order across repeated scans.
+- Restore bStats, Gson and jsoup relocation and test the final shaded JAR, including bStats' own relocation check.
+
 ## 1.4.0
 
 [Release and downloads](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.4.0). Existing 1.3.x configurations remain supported; keep the configuration folder when upgrading.
