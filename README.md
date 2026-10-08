@@ -187,3 +187,7 @@ metrics:
 Alternatively, set `enabled: false` in the shared `plugins/bStats/config.yml` and restart the server to disable bStats across plugins. This plugin does not override that global choice. A report about your server's configuration is never sent unsolicited.
 
 Reports start after bStats' normal delay (approximately 3–6 minutes) and recur about every 30 minutes. The dashboard publishes at hh:00 and hh:30, so the first data point can take 3–36 minutes to appear.
+
+### 1.4.1 preview console reports
+
+Console/RCON reports show confirmed updates and actionable problems with troubleshooting links. Use `/pu list all` to inspect current and unconfirmed versions. Unconfirmed labels are not treated as updates or proof of being current. In-game reports remain complete.

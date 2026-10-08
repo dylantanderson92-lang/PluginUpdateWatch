@@ -1,5 +1,8 @@
 # PluginUpdateWatch 1.4.1-SNAPSHOT (unreleased preview)
 
+- Preview: compact console/RCON reports show confirmed updates and actionable problems; `/pu list all` exposes current/unconfirmed rows without falsely classifying uncertain versions as current.
+- Preview: consolidate download warnings, link specific troubleshooting topics, and mark an identical-file download CURRENT in its cached report until the next check.
+
 - Compare provider checksums against original installed JARs before advertising an update. Identical files are CURRENT even when release labels differ, fixing the reported BedrockEssentials beta.1/beta.2 false alert.
 - Read Geyser/Floodgate build metadata and SHA-256 checksums for official latest Spigot links. Pin downloads to the checked build, suppress identical files and avoid offering older core versions over installed development builds.
 - Report duplicate/non-newer downloads as informational outcomes with no replacement saved, rather than provider errors with retry instructions.

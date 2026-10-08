@@ -1,5 +1,8 @@
 # Changelog
 
+- Preview: compact console/RCON reports show confirmed updates and actionable problems; `/pu list all` exposes current/unconfirmed rows without falsely classifying uncertain versions as current.
+- Preview: consolidate download warnings, link specific troubleshooting topics, and mark an identical-file download CURRENT in its cached report until the next check.
+
 ## 1.4.1-SNAPSHOT (unreleased)
 
 - Suppress false updates when a provider checksum matches the original installed JAR, even if the release label differs.

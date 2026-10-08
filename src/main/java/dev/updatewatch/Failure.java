@@ -80,7 +80,8 @@ record Failure(Failure.Kind kind, String detail, long retryAfterSeconds) {
         };
         String prefix = noUpdate() ? "[INFO]" : kind == Kind.NO_COMPATIBLE_RELEASE || kind == Kind.CANCELLED ? "[WARNING]" : "[ERROR]";
         String source = providerName(provider);
-        return prefix + " " + category + (source.isEmpty() ? "" : " | " + source) + ": " + safe(detail) + ". " + action();
+        return prefix + " " + category + (source.isEmpty() ? "" : " | " + source) + ": " + safe(detail) + ". " + action()
+                + " Help: " + Troubleshooting.failure(kind);
     }
 
     boolean noUpdate() { return kind == Kind.ALREADY_INSTALLED || kind == Kind.NO_NEWER_ARTIFACT; }

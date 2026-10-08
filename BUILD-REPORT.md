@@ -1,3 +1,17 @@
+# Compact console reports and troubleshooting � 1.4.1-SNAPSHOT
+
+Checked 9 October 2026 (Pacific/Auckland).
+
+- Java 21 and Java 25 `mvn clean verify`: **166 checks passed on each runtime** (165 unit tests plus one packaged-JAR integration test), zero failures/errors/skips.
+- Six new tests cover compact missing-source messages, classified failures and wiki routing, confirmed update actions/checksum restrictions, consolidated download warnings, identical-download cache replacement and truthful summaries. Updated visibility tests ensure UNKNOWN/DIFFERENT remain available in full reports but do not masquerade as confirmed updates.
+- The exact Java 21 artifact passed isolated Paper 26.3 / Java 25 startup, scan/check/list/list all/reload, confirmed update display, CURRENT and uncertain console suppression, full-report retention, troubleshooting links, current download refusal and config-save stability. Real Modrinth fixtures exercised compatibility warnings. The server exited normally; original test configs/JARs were restored. Production was not changed.
+- Strict MkDocs build passed; all 14 troubleshooting anchors referenced by the new message helpers exist in the generated page. Links become available on the public wiki when these docs are merged/deployed.
+- An identical download marks only its still-current cached result CURRENT; a fresh check reevaluates the source. Generic mutable URLs are not permanently considered current. Downloaded newer files are not confused with installed updates.
+
+Snapshot SHA-256: `72b7e854a964851c3cbaf9ff180c486fc5d24a75f7a8ee8b33981d3c5c388fc0`.
+
+---
+
 # Identical-artifact and official build metadata verification — 1.4.1-SNAPSHOT
 
 Checked 8 October 2026 (Pacific/Auckland), after the production download attempts at 14:36–14:38.
