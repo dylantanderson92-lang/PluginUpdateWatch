@@ -31,6 +31,9 @@ class ArtifactFreshnessTest {
         Path installed = temp.resolve("installed.jar"); Files.write(installed, bytes);
         var error = assertThrows(Failure.Problem.class, () -> download("1.0-SNAPSHOT", "2.0", bytes, installed));
         assertTrue(error.getMessage().contains("byte-for-byte"));
+        var outcome = Failure.classify(error);
+        assertTrue(outcome.noUpdate()); assertTrue(outcome.describe("modrinth").startsWith("[INFO] ALREADY_INSTALLED"));
+        assertFalse(outcome.describe("modrinth").contains("PROVIDER_ERROR"));
         assertArrayEquals(bytes, Files.readAllBytes(installed));
         try (var files = Files.list(temp.resolve("downloads"))) { assertEquals(0, files.count()); }
     }
@@ -42,7 +45,10 @@ class ArtifactFreshnessTest {
         }
     }
     @Test void unknownWebSourceCannotDownloadANumericDowngrade() throws Exception {
-        assertThrows(Failure.Problem.class, () -> download("2.0", SourcePage.UNKNOWN_VERSION, jar("1.0", "old"), null));
+        var error = assertThrows(Failure.Problem.class, () -> download("2.0", SourcePage.UNKNOWN_VERSION, jar("1.0", "old"), null));
+        var outcome = Failure.classify(error);
+        assertTrue(outcome.noUpdate()); assertTrue(outcome.describe("web").startsWith("[INFO] NO_UPDATE"));
+        assertTrue(outcome.describe("web").contains("1.0")); assertTrue(outcome.describe("web").contains("2.0"));
     }
     @Test void changingSnapshotWithSameDescriptorVersionIsAllowedForExplicitInspection() throws Exception {
         Path installed = temp.resolve("installed.jar"); Files.write(installed, jar("1.0-SNAPSHOT", "old"));

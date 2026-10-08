@@ -1,5 +1,8 @@
 # PluginUpdateWatch 1.4.1-SNAPSHOT (unreleased preview)
 
+- Compare provider checksums against original installed JARs before advertising an update. Identical files are CURRENT even when release labels differ, fixing the reported BedrockEssentials beta.1/beta.2 false alert.
+- Read Geyser/Floodgate build metadata and SHA-256 checksums for official latest Spigot links. Pin downloads to the checked build, suppress identical files and avoid offering older core versions over installed development builds.
+- Report duplicate/non-newer downloads as informational outcomes with no replacement saved, rather than provider errors with retry instructions.
 - Accept Spigot resource titles with encoded Unicode emoji/punctuation while still rejecting encoded ASCII path separators, traversal and invalid UTF-8.
 - Resolve the official Geyser/Floodgate project download pages to their Spigot download endpoints instead of unrelated GitHub footer links.
 - Compare explicit numeric snapshot/beta/alpha/RC counters within a channel and numeric core changes for recognized development versions. Unnumbered/custom build labels remain uncertain. Warn for GitHub development tags even when the publisher does not mark them prereleases.

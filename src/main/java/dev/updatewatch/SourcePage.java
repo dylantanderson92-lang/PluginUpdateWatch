@@ -34,6 +34,7 @@ final class SourcePage {
         String initial;
         try { initial = HttpTransport.webUri(source.id()).toString(); }
         catch (IOException e) { throw Failure.problem(Failure.Kind.INVALID_CONFIG, "Invalid HTTPS web source", e); }
+        if (GeyserRelease.project(initial) != null) return GeyserRelease.latest(initial, pages);
         var queue = new ArrayDeque<String>(); queue.add(initial);
         var visited = new HashSet<String>();
         IOException lastFailure = null;

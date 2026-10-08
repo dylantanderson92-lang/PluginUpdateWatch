@@ -282,12 +282,18 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                         + "Saved " + path + ". Downloaded version: " + descriptor.version() + ". " + freshness + actualType.message()
                         + (r.release().compatibilityWarning() == null ? "" : " " + r.release().compatibilityWarning())
                         + " Stop the server, replace the old plugin JAR, then restart. Check the release's Minecraft compatibility first.";
-            } catch (Exception e) { message = Failure.classify(e).describe(r.source().type()) + " Retry downloads with /pu download " + r.source().name() + " after resolving the problem."; }
+            } catch (Exception e) {
+                var failure = Failure.classify(e);
+                message = failure.describe(r.source().type()) + (failure.noUpdate() ? ""
+                        : " Retry downloads with /pu download " + r.source().name() + " after resolving the problem.");
+            }
             String finalMessage = message;
             sync(() -> {
                 downloads.remove(key); tell(sender, finalMessage);
-                if (finalMessage.contains("[ERROR]") || finalMessage.contains("[WARNING]")) getLogger().warning(finalMessage);
-                else getLogger().info(finalMessage);
+                if (!(sender instanceof ConsoleCommandSender)) {
+                    if (finalMessage.contains("[ERROR]") || finalMessage.contains("[WARNING]")) getLogger().warning(finalMessage);
+                    else getLogger().info(finalMessage);
+                }
             });
         });
     }

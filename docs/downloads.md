@@ -51,6 +51,10 @@ Version formatting alone does not establish an update. For example, Plan's `5.8 
 
 When the installed original JAR can be matched, an identical downloaded file is rejected. Numerically older versions and same/older descriptor versions behind an advertised update are also rejected before the file is accepted.
 
+The **1.4.1 preview** also compares available provider checksums with an unambiguous original installed JAR during checks. A matching SHA-512/SHA-256 makes the result CURRENT even if the publisher used a different release label. If multiple supported digests are supplied, all must match. Missing or ambiguous local JARs cannot establish file equality. Checks do not download full remote JARs just to compare them.
+
+Duplicate or non-newer downloads report informational `ALREADY_INSTALLED` or `NO_UPDATE` outcomes, retain the installed plugin and discard the temporary file. They no longer appear as provider failures with retry instructions. Older-version outcomes include the installed and downloaded descriptor versions. Invalid archives, identity failures and checksum mismatches remain errors.
+
 An unknown web version or ambiguous version difference is labelled **Download for inspection**; it does not establish that a newer release exists or trigger an update notification. A changed snapshot with the same descriptor version may be saved for inspection, with an explicit warning that a newer version has not been established.
 
 Alpha, beta, prerelease, development and unknown release types carry warnings. Review the publisher's compatibility notes before installing. Generic filenames such as `BigDoors.jar` can stay unchanged across genuine releases; the filename alone is not the version.

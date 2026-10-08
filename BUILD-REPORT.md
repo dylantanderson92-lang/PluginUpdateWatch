@@ -1,3 +1,18 @@
+# Identical-artifact and official build metadata verification — 1.4.1-SNAPSHOT
+
+Checked 8 October 2026 (Pacific/Auckland), after the production download attempts at 14:36–14:38.
+
+- Java 21 and Java 25 `mvn clean verify`: **160 checks passed on each runtime** (159 unit tests plus one packaged-JAR integration test), zero failures/errors/skips.
+- Eleven new tests cover identical/different/malformed provider digests, missing/ambiguous/replaced installed JARs, SHA-256 and multi-digest matching, official build metadata, pinned URLs, default-channel downgrades, malformed responses, rate limits and endpoint scope. Existing download tests now assert informational duplicate/non-newer outcomes while still ensuring stale files are rejected and previous downloads preserved.
+- Modrinth's advertised BedrockEssentials `0.1.0-beta.2` asset is named `BedrockEssentials-0.1.0-beta.1.jar` and its SHA-512 matched the original installed file. A read-only invocation of the new checker against production JARs and live APIs returned CURRENT with no error for BedrockEssentials, Geyser-Spigot and floodgate.
+- Geyser's selected default endpoint reported version `2.11.3`, build `1249`, versus installed `2.12.0-SNAPSHOT`. Floodgate reported `2.2.5`, build `141`, with SHA-256 matching the installed file. Both pinned Spigot download URLs returned HTTP 200 and a ZIP signature. No production plugin was downloaded into place, executed or restarted during these diagnostics.
+- The exact Java 21 JAR below passed isolated Paper 26.3 build 41 / Java 25 startup, scan/check/list/reload, current suppression/download refusal, real Modrinth compatibility warning and repeated config-save stability checks. Test metrics were globally opted out; the server exited with code 0 and its previous configs/JARs were restored. Prior live 1.21.11 results below apply to their separately identified artifacts.
+- Generic web sources still cannot establish current/newer status without metadata. This change neither suppresses provider failures nor disables checksum/JAR validation. No persistent assumption is made about mutable download URLs: available provider digests are checked again on each scan/check.
+
+Snapshot SHA-256: `4a9cca0838696e9b351f7441442a071ff2d29066cb27c9c54d146823288f02eb`.
+
+---
+
 # Console/config follow-up — 1.4.1-SNAPSHOT
 
 Checked 8 October 2026 (Pacific/Auckland), after the 14:17 console report.

@@ -24,9 +24,11 @@ class ReportedSourcesTest {
             assertEquals("web", link.type());
             assertEquals("https://download.geysermc.org/v2/projects/" + project + "/versions/latest/builds/latest/downloads/spigot", link.id());
             var release = SourcePage.latest(link.source(project, "1.0", "26.3"),
-                    url -> { assertEquals(link.id(), url); return new SourcePage.Page(url, "", true); },
+                    url -> { assertEquals(link.id().replace("/downloads/spigot", ""), url); return new SourcePage.Page(url,
+                            "{\"version\":\"2.2.5\",\"build\":141,\"downloads\":{\"spigot\":{\"name\":\"Example.jar\",\"sha256\":\"" + "a".repeat(64) + "\"}}}", false); },
                     url -> { fail("Must not query unrelated GitHub releases"); return null; });
-            assertEquals(link.id(), release.download()); assertEquals(SourcePage.UNKNOWN_VERSION, release.version());
+            assertEquals(link.id().replace("versions/latest/builds/latest", "versions/2.2.5/builds/141"), release.download());
+            assertEquals("2.2.5", release.version()); assertTrue(release.hasChecksum());
         }
     }
     @Test void otherGeyserProjectsAndLookalikesAreNotRewritten() {
