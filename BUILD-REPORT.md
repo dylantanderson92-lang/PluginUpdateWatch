@@ -1,4 +1,4 @@
-# Compact console reports and troubleshooting � 1.4.1-SNAPSHOT
+# Compact console reports and troubleshooting - 1.4.1-SNAPSHOT
 
 Checked 9 October 2026 (Pacific/Auckland).
 
