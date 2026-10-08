@@ -1,3 +1,17 @@
+# Console/config follow-up — 1.4.1-SNAPSHOT
+
+Checked 8 October 2026 (Pacific/Auckland), after the 14:17 console report.
+
+- Java 21 and Java 25 `mvn clean verify`: **149 checks passed on each runtime** (148 unit tests and one final-JAR integration test), zero failures/errors/skips.
+- Nine added tests cover the reported encoded Spigot titles, malicious/invalid encodings, exact Geyser project page routing, unrelated URLs, numbered snapshot/beta ordering, genuinely ambiguous labels, GitHub development warnings, stale prerelease downloads and preservation of config row key order across scans.
+- The configured Spigot IDs `124687` and `75097` returned HTTP 200 with versions `1.1.7` and `1.35.24`. Both official Geyser/Floodgate Spigot endpoints returned HTTP 200 and a ZIP signature. These probes did not install or execute downloaded upstream code.
+- The final Java 21 follow-up JAR passed isolated Paper 26.3 build 41 / Java 25 startup, scan/check/list/reload, current download refusal, real Modrinth missing-label warnings and repeated config-save stability. The server exited with code 0 and its prior config/JARs were restored. The earlier two-version live evidence below identifies a different artifact; it is not claimed as a live test of this exact follow-up JAR on 1.21.11.
+- Production config was read for diagnosis, not edited. Fixed Essentials artifact links and custom/unnumbered version labels remain inspection/uncertain results. No source is guessed for local plugins with blank links.
+
+Follow-up snapshot SHA-256: `0f94abf71b9492b2781937c775ac468ae66c15bc5c150d57f1ab2a0ed5341b33`.
+
+---
+
 # Enabled-plugin compatibility and config formatting — 1.4.1-SNAPSHOT
 
 Checked 8 October 2026 (Pacific/Auckland). Unreleased preview based on main `952b09f6624a336a283a4477fffa3f7bfeab8d5b`.

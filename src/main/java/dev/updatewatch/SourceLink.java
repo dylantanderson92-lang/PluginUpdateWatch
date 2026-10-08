@@ -11,6 +11,13 @@ record SourceLink(String type, String id, String asset) {
                 || (uri.getPort() != -1 && uri.getPort() != 443))
             throw new IllegalArgumentException("Use an HTTPS project page or direct download link");
         String host = uri.getHost().toLowerCase(Locale.ROOT);
+        // The official download page renders its platform links in JavaScript.
+        // Resolve only its two explicit Bukkit projects; do not crawl its unrelated GitHub footer.
+        if ((host.equals("geysermc.org") || host.equals("www.geysermc.org"))
+                && uri.getPath().matches("/download/?") && uri.getRawQuery() != null
+                && uri.getRawQuery().matches("project=(geyser|floodgate)"))
+            return new SourceLink("web", "https://download.geysermc.org/v2/projects/" + uri.getRawQuery().substring(8)
+                    + "/versions/latest/builds/latest/downloads/spigot", ".*\\.jar");
         if (java.util.Set.of("modrinth.com", "spigotmc.org", "github.com").stream().anyMatch(h -> host.startsWith(h + ".") || host.startsWith("www." + h + ".")))
             throw new IllegalArgumentException("Provider lookalike hostname rejected");
         boolean known = java.util.Set.of("modrinth.com", "www.modrinth.com", "spigotmc.org", "www.spigotmc.org", "github.com").contains(host);
@@ -18,7 +25,15 @@ record SourceLink(String type, String id, String asset) {
             try { return new SourceLink("web", HttpTransport.webUri(uri.toString().split("#", 2)[0]).toString(), ".*\\.jar"); }
             catch (java.io.IOException e) { throw new IllegalArgumentException("Use a public HTTPS source page or direct download URL", e); }
         }
-        if (uri.getRawPath().contains("%") || uri.getPath().contains("\\") || uri.getPath().contains("//")
+        // Spigot resource titles commonly contain percent-encoded emoji/punctuation.
+        // Permit UTF-8 bytes in the title only, never encoded ASCII separators or route/ID segments.
+        String rawPath = uri.getRawPath();
+        String[] rawParts = rawPath.split("/");
+        boolean encodedSpigotTitle = (host.equals("spigotmc.org") || host.equals("www.spigotmc.org"))
+                && rawParts.length == 3 && rawParts[1].equals("resources")
+                && !rawParts[2].replaceAll("%[89a-fA-F][0-9a-fA-F]", "").contains("%")
+                && !uri.getPath().contains("\uFFFD");
+        if ((rawPath.contains("%") && !encodedSpigotTitle) || uri.getPath().contains("\\") || uri.getPath().contains("//")
                 || java.util.Arrays.stream(uri.getPath().split("/")).anyMatch(p -> p.equals(".") || p.equals("..")))
             throw new IllegalArgumentException("Source paths must not contain encoded or relative segments");
         String[] parts = uri.getPath().split("/");

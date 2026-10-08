@@ -2,6 +2,8 @@
 
 Available in **1.4.0 and later**.
 
+The **1.4.1 preview** also recognizes the official `https://geysermc.org/download?project=geyser` and `https://geysermc.org/download?project=floodgate` pages (with or without the trailing slash before `?`). These resolve directly to the corresponding latest Spigot download endpoint. They remain web inspection downloads: finding a file alone does not establish that its version is newer. Existing checksum and JAR checks still apply.
+
 Manual entries still need only the exact installed JAR filename and an HTTPS source URL. For example:
 
 ```yaml

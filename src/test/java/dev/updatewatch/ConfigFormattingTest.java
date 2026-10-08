@@ -55,4 +55,16 @@ class ConfigFormattingTest {
         assertTrue(Files.readString(path).contains("\n\n- jar: Second.jar"));
         assertEquals(2, ConfigManager.parse(Files.readString(path)).getMapList("updates").size());
     }
+    @Test void resolutionPreservesRowKeyOrderAcrossRepeatedScans() throws Exception {
+        String text = ConfigManager.serialize(ConfigManager.parse(yaml));
+        for (int i = 0; i < 3; i++) {
+            var config = ConfigManager.parse(text);
+            var resolution = ConfigSources.resolve(config, java.util.List.of(), java.util.List.of(), "26.3", true, hash -> null);
+            assertEquals(java.util.List.of("source", "jar", "note"), new java.util.ArrayList<>(resolution.entries().getFirst().keySet()));
+            assertEquals(java.util.List.of("jar", "source"), new java.util.ArrayList<>(resolution.entries().get(1).keySet()));
+            config.set("updates", resolution.entries());
+            assertEquals(text, ConfigManager.serialize(config));
+            text = ConfigManager.serialize(config);
+        }
+    }
 }

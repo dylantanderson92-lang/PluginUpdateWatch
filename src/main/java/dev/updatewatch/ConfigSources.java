@@ -96,6 +96,7 @@ final class ConfigSources {
                     && installed.stream().anyMatch(p -> Discovery.metadataMatches(j, p))))
                 notes.put("Config: " + filename, "JAR does not match an installed plugin; update the filename if it changed, or run /pu cleanup to review missing-file entries");
         }
-        return new Resolution(List.copyOf(sources), Collections.unmodifiableMap(new LinkedHashMap<>(notes)), entries.stream().map(Map::copyOf).toList());
+        return new Resolution(List.copyOf(sources), Collections.unmodifiableMap(new LinkedHashMap<>(notes)),
+                entries.stream().map(e -> Collections.unmodifiableMap(new LinkedHashMap<>(e))).toList());
     }
 }

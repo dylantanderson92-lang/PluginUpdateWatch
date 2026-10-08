@@ -1,7 +1,11 @@
 # PluginUpdateWatch 1.4.1-SNAPSHOT (unreleased preview)
 
+- Accept Spigot resource titles with encoded Unicode emoji/punctuation while still rejecting encoded ASCII path separators, traversal and invalid UTF-8.
+- Resolve the official Geyser/Floodgate project download pages to their Spigot download endpoints instead of unrelated GitHub footer links.
+- Compare explicit numeric snapshot/beta/alpha/RC counters within a channel and numeric core changes for recognized development versions. Unnumbered/custom build labels remain uncertain. Warn for GitHub development tags even when the publisher does not mark them prereleases.
 - Enabled plugins are checked against the newest listed Modrinth Paper/Spigot/Bukkit release even without a matching Minecraft-version label. Equal/newer installed versions remain CURRENT; newer releases carry a compatibility warning when needed. Disabled plugins retain strict game-version filtering. Failed checks remain errors.
 - Scans and cleanup saves separate plugin config entries with blank lines. Run `/pu scan` to format an existing config; settings are preserved.
+- Preserve the existing order of fields within config entries across repeated scans.
 - Restore dependency relocation to fix bStats startup in the packaged JAR. Add a final-artifact regression test.
 - No configuration migration is required. Enabled status proves startup only, not full functionality or compatibility of a new release. Download validation is unchanged.
 
