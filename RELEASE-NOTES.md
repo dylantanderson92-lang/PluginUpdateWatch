@@ -1,7 +1,9 @@
-# PluginUpdateWatch 1.4.1-SNAPSHOT (unreleased preview)
+# PluginUpdateWatch 1.4.1
 
-- Preview: compact console/RCON reports show confirmed updates and actionable problems; `/pu list all` exposes current/unconfirmed rows without falsely classifying uncertain versions as current.
-- Preview: consolidate download warnings, link specific troubleshooting topics, and mark an identical-file download CURRENT in its cached report until the next check.
+Download PluginUpdateWatch-1.4.1.jar from Assets. Stop the server, replace the old PluginUpdateWatch JAR, keep the configuration folder, then restart. No config migration is required. The tested preview passed the server owner's live Paper 26.3 test; stable verification passed 166 checks on Java 21 and Java 25.
+
+- compact console/RCON reports show confirmed updates and actionable problems; `/pu list all` exposes current/unconfirmed rows without falsely classifying uncertain versions as current.
+- consolidate download warnings, link specific troubleshooting topics, and mark an identical-file download CURRENT in its cached report until the next check.
 
 - Compare provider checksums against original installed JARs before advertising an update. Identical files are CURRENT even when release labels differ, fixing the reported BedrockEssentials beta.1/beta.2 false alert.
 - Read Geyser/Floodgate build metadata and SHA-256 checksums for official latest Spigot links. Pin downloads to the checked build, suppress identical files and avoid offering older core versions over installed development builds.
