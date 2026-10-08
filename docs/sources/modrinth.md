@@ -25,9 +25,9 @@ Only the hash is sent. The JAR is not uploaded.
 
 The primary matching JAR is preferred. Beta and alpha builds display a release-type warning. Minecraft-version and loader compatibility filters still apply; newer incompatible builds are not selected.
 
-### 1.4.1 preview: enabled plugins
+### 1.4.1: enabled plugins
 
-In `1.4.1-SNAPSHOT`, plugins currently enabled by Paper are compared with the newest listed Paper/Spigot/Bukkit release, including alpha/beta, even if it omits the server's Minecraft version. This also finds a newer release with missing version labels when an older release lists your version.
+In `1.4.1`, plugins currently enabled by Paper are compared with the newest listed Paper/Spigot/Bukkit release, including alpha/beta, even if it omits the server's Minecraft version. This also finds a newer release with missing version labels when an older release lists your version.
 
 An equal or newer installed version is CURRENT and omitted from console reports. A confirmed newer release is an update. When its game-version label is missing, in-game listings and downloads show a compatibility warning. Startup confirms that the installed plugin enabled; it cannot prove full functionality or compatibility of the new download.
 

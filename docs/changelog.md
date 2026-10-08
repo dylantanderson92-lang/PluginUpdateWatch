@@ -1,9 +1,13 @@
 # Changelog
 
-- Preview: compact console/RCON reports show confirmed updates and actionable problems; `/pu list all` exposes current/unconfirmed rows without falsely classifying uncertain versions as current.
-- Preview: consolidate download warnings, link specific troubleshooting topics, and mark an identical-file download CURRENT in its cached report until the next check.
+## 1.4.1
 
-## 1.4.1-SNAPSHOT (unreleased)
+[Release and downloads](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.4.1). Existing configurations remain supported. The server owner confirmed the tested preview works on live Paper 26.3.
+
+- compact console/RCON reports show confirmed updates and actionable problems; `/pu list all` exposes current/unconfirmed rows without falsely classifying uncertain versions as current.
+- consolidate download warnings, link specific troubleshooting topics, and mark an identical-file download CURRENT in its cached report until the next check.
+
+
 
 - Suppress false updates when a provider checksum matches the original installed JAR, even if the release label differs.
 - Use official Geyser/Floodgate build metadata, pinned build downloads and SHA-256 checksums for latest Spigot endpoints.

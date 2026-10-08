@@ -1,6 +1,6 @@
 # Spigot / Spiget
 
-The **1.4.1 preview** accepts resource titles containing encoded Unicode, including emoji, as well as short numeric resource links. Both resolve to the resource ID. Encoded ASCII separators, traversal and malformed UTF-8 remain rejected.
+The **1.4.1** accepts resource titles containing encoded Unicode, including emoji, as well as short numeric resource links. Both resolve to the resource ID. Encoded ASCII separators, traversal and malformed UTF-8 remain rejected.
 
 PluginUpdateWatch supports Spigot resource links, with update information checked through Spiget.
 

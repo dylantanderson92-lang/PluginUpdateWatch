@@ -1,3 +1,14 @@
+# Stable release preparation - 1.4.1
+
+Checked 9 October 2026 (Pacific/Auckland).
+
+- The server owner reported a successful live Paper 26.3 test of the final 1.4.1 preview and authorized stable release publication.
+- Stable source changes only version metadata and documentation; runtime behavior matches the tested preview. Java 21 and Java 25 each passed 166 checks (165 unit tests and one packaged-JAR integration test), with zero failures/errors/skips. Strict MkDocs verification passed.
+- Stable Java 21 artifact SHA-256: `5206d95578f142a683e32f34b54ce9c2972a228f63a7c158dd7f9a9128901de9`.
+- Stable downloads, command documentation and wiki troubleshooting now document 1.4.1. Prior artifact-specific verification remains recorded below.
+
+---
+
 # Compact console reports and troubleshooting - 1.4.1-SNAPSHOT
 
 Checked 9 October 2026 (Pacific/Auckland).

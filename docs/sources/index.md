@@ -5,7 +5,7 @@ PluginUpdateWatch supports these update-source types:
 - [Modrinth](modrinth.md)
 - [Spigot / Spiget](spigot.md)
 - [GitHub Releases](github.md)
-- [HTTPS wiki/project pages and direct downloads](web.md) — 1.4.0+
+- [HTTPS wiki/project pages and direct downloads](web.md) â€” 1.4.0+
 
 A manual entry always uses the same basic structure:
 
