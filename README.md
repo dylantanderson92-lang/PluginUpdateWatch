@@ -8,6 +8,14 @@ Detect installed Paper plugins, find update sources, notify admins, and download
 
 ## Install or upgrade
 
+### 1.4.1 preview
+
+The `1.4.1-SNAPSHOT` build checks enabled plugins against the newest published Modrinth Paper/Spigot/Bukkit release even when the publisher omits the server's Minecraft version. An equal or newer installed version is CURRENT and stays out of console reports. A newer release is offered with an unlisted-compatibility warning. Being enabled confirms startup only; it does not prove every feature works or that a new release is compatible. Disabled plugins retain the exact Minecraft-version filter, and failed checks never become CURRENT.
+
+Scans and cleanup saves add a blank line between plugin entries in `updates:` and legacy `plugins:` sections. Existing settings are preserved; run `/pu scan` to format an existing config. This preview also restores bundled dependency relocation, fixing the bStats startup failure in 1.4.0.
+
+### Stable installation
+
 1. Stop the server.
 2. Put `PluginUpdateWatch-1.4.0.jar` into the server's `plugins` folder. Remove the older PluginUpdateWatch JAR if upgrading. Keep its existing configuration folder.
 3. Start the server. A scan begins automatically after startup.
@@ -43,6 +51,7 @@ Spigot and GitHub work the same way:
 updates:
   - jar: "SpigotPlugin.jar"
     source: "https://www.spigotmc.org/resources/example-plugin.12345/"
+
   - jar: "GitHubPlugin.jar"
     source: "https://github.com/owner/repository"
 ```

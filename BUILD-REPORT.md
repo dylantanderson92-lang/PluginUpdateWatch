@@ -1,3 +1,19 @@
+# Enabled-plugin compatibility and config formatting — 1.4.1-SNAPSHOT
+
+Checked 8 October 2026 (Pacific/Auckland). Unreleased preview based on main `952b09f6624a336a283a4477fffa3f7bfeab8d5b`.
+
+- Java 21 and Java 25 Maven `clean verify`: **140 checks passed on each runtime** (139 unit tests plus one final-JAR integration test), zero failures, errors or skipped tests.
+- Eight compatibility tests cover enabled/current/newer/older versions, newest releases without Minecraft labels, loader/status filtering, disabled-plugin strict filtering, matching-label warnings, provider failures and propagation through modern/legacy config.
+- Three formatting tests cover blank lines between modern and legacy plugin entries, multiline values, repeated serialization, concurrent-edit protection and cleanup backups.
+- The packaged-JAR test verifies relocation of bStats, Gson and jsoup and constructs the relocated bStats client with reporting disabled and its own relocation guard enabled. This catches the missing relocation in the published 1.4.0 POM. CI now retains both unit and integration test reports.
+- The exact Java 21 artifact passed isolated Paper 1.21.11 build 132 / Java 21 and Paper 26.3 build 41 alpha / Java 25 startup, scan/check/list/reload, config spacing and repeated-save stability checks. Enabled fixture plugins queried the real GPTitle Modrinth project: the newer result displayed its missing-26.3-label warning; the current fixture stayed out of console output and its download was refused. bStats construction succeeded with global reporting opted out. Both servers exited with code 0; their prior config/JARs were restored.
+- These fixture checks verify PluginUpdateWatch behavior, not GPTitle's runtime compatibility. No new upstream artifact was installed or executed. Production DylyCraft was not modified or restarted. Full in-game warning rendering is covered by result/visibility assertions, not a connected player session.
+- `mkdocs build --strict` passed. Documentation marks the changed policy as a 1.4.1 preview; stable download links remain at 1.4.0.
+
+Tested snapshot SHA-256: `e1c6e2f7907da3efc592fac9318be888c6b8e41f30334e5d6a0bf21b3c7edd2e`.
+
+---
+
 # Published release and documentation verification — 1.4.0
 
 Checked 7 October 2026 (Pacific/Auckland).

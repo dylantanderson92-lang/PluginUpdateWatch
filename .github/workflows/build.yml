@@ -43,5 +43,7 @@ jobs:
         if: always()
         with:
           name: test-reports-java-${{ matrix.java }}
-          path: target/surefire-reports/
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
           if-no-files-found: warn

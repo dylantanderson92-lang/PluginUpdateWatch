@@ -97,7 +97,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
         if (!getServer().isPrimaryThread()) throw new IllegalStateException("Check state must be accessed on the server thread");
         if (checkState.running()) { if (sender != null) tell(sender, "A check is already running."); return; }
         var installed = Arrays.stream(getServer().getPluginManager().getPlugins()).filter(p -> p != this)
-                .map(p -> new Discovery.Installed(p.getName(), p.getPluginMeta().getVersion(), p.getPluginMeta().getWebsite())).toList();
+                .map(p -> new Discovery.Installed(p.getName(), p.getPluginMeta().getVersion(), p.getPluginMeta().getWebsite(), p.isEnabled())).toList();
         String snapshot = getConfig().saveToString();
         var configFile = getDataFolder().toPath().resolve("config.yml");
         String diskSnapshot;
@@ -135,12 +135,15 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                         lastCheckFailure = "[WARNING] CONFIG_ERROR | Config changed during scan; results discarded. Run /pu reload.";
                         tell(sender == null ? getServer().getConsoleSender() : sender, lastCheckFailure); return;
                     }
-                    if (scan && !resolution.entries().equals(getConfig().getMapList("updates"))) {
+                    if (scan) {
                         var updated = ConfigManager.parse(diskSnapshot);
                         updated.set("updates", resolution.entries());
-                        ConfigManager.save(configFile, diskSnapshot, updated.saveToString());
-                        loadedConfig = updated.saveToString();
-                        reloadConfig();
+                        String formatted = ConfigManager.serialize(updated);
+                        if (!formatted.equals(diskSnapshot)) {
+                            ConfigManager.save(configFile, diskSnapshot, formatted);
+                            loadedConfig = formatted;
+                            reloadConfig();
+                        }
                     }
                 } catch (Exception e) {
                     lastCheckFailure = "Could not save discovery config. " + Failure.classify(e).describe(null);
@@ -193,6 +196,8 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             };
             NamedTextColor color = r.status() == Versions.Status.CURRENT ? NamedTextColor.GREEN : NamedTextColor.YELLOW;
             Component line = Component.text(r.source().name() + ": " + r.source().installed() + " -> " + r.release().version() + " - " + label, color);
+            if (r.release().compatibilityWarning() != null)
+                line = line.append(Component.text(" | " + r.release().compatibilityWarning(), NamedTextColor.YELLOW));
             if (r.status() != Versions.Status.CURRENT) {
                 line = line.append(Component.text(" | " + r.release().type().message(), r.release().type().warning ? NamedTextColor.YELLOW : NamedTextColor.GRAY));
                 line = line.append(Component.text(" [Release page]", NamedTextColor.AQUA).clickEvent(ClickEvent.openUrl(r.release().page())));
@@ -250,6 +255,10 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
             tell(sender, "[WARNING] No newer version has been confirmed. This explicitly requested download is for inspection, not a verified upgrade.");
         tell(sender, "Downloading " + r.source().name() + " " + r.release().version() + "...");
         tell(sender, r.source().name() + ": " + r.release().type().message());
+        if (r.release().compatibilityWarning() != null) {
+            tell(sender, r.release().compatibilityWarning());
+            if (!(sender instanceof ConsoleCommandSender)) getLogger().warning(r.source().name() + ": " + r.release().compatibilityWarning());
+        }
         if (r.release().type().warning && !(sender instanceof ConsoleCommandSender))
             getLogger().warning(r.source().name() + ": " + r.release().type().message());
         Settings downloadSettings = settings;
@@ -271,6 +280,7 @@ public final class UpdateWatch extends JavaPlugin implements Listener, TabComple
                         : "[WARNING] JAR version does not establish a newer release; this file is for inspection only. ";
                 message = (r.release().hasChecksum() ? "[INFO] Checksum verified. " : "[WARNING] Checksum unverified (explicitly allowed). ")
                         + "Saved " + path + ". Downloaded version: " + descriptor.version() + ". " + freshness + actualType.message()
+                        + (r.release().compatibilityWarning() == null ? "" : " " + r.release().compatibilityWarning())
                         + " Stop the server, replace the old plugin JAR, then restart. Check the release's Minecraft compatibility first.";
             } catch (Exception e) { message = Failure.classify(e).describe(r.source().type()) + " Retry downloads with /pu download " + r.source().name() + " after resolving the problem."; }
             String finalMessage = message;

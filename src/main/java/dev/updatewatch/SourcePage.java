@@ -71,7 +71,7 @@ final class SourcePage {
                 if (link.provider() != null) {
                     if (providers++ >= 3) continue;
                     try {
-                        var release = Providers.latest(link.provider().source(source.name(), source.installed(), source.minecraft()), json);
+                        var release = Providers.latest(link.provider().source(source.name(), source.installed(), source.minecraft()).withEnabled(source.enabled()), json);
                         if (release.download() != null) return release;
                     } catch (IOException e) { lastFailure = e; }
                 } else if (filename(link.url()) != null) return unversioned(source, link.url(), initial);

@@ -120,6 +120,17 @@ Version 1.3.3 adds `metrics.enabled`, defaulting to `true`. Set it to `false` an
 
 ## Applying changes
 
+Starting with the `1.4.1-SNAPSHOT` preview, scans and cleanup saves insert a blank line between entries in `updates:` and legacy `plugins:` sections. Run `/pu scan` to format existing entries, even if discovery finds no new plugins. Setting values are preserved; YAML comments may be reformatted.
+
+```yaml
+updates:
+  - jar: "FirstPlugin.jar"
+    source: "https://modrinth.com/plugin/first-plugin"
+
+  - jar: "SecondPlugin.jar"
+    source: "https://github.com/owner/second-plugin"
+```
+
 After editing the configuration, run:
 
 ```text

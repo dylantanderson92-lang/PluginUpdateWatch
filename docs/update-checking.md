@@ -38,7 +38,7 @@ Only a confirmed newer version triggers update/join notifications. Equivalent ve
 
 In 1.4.0 and later, console/RCON reports omit current plugins and intentionally disabled informational entries. Updates, unknown web downloads, failed checks and configuration warnings remain visible. In-game `/pu list` retains the full report; a quiet console does not mean configured plugins were skipped.
 
-Modrinth and GitHub include prereleases in latest-release selection and warn about their type. Modrinth still requires a matching Minecraft version and Paper/Spigot/Bukkit loader. [Web sources](sources/web.md) must be configured explicitly and cannot always establish a version or compatibility.
+Modrinth and GitHub include prereleases in latest-release selection and warn about their type. Stable 1.4.0 requires matching Minecraft and Paper/Spigot/Bukkit labels on Modrinth. The [1.4.1 preview policy](sources/modrinth.md#141-preview-enabled-plugins) allows missing Minecraft labels for enabled plugins, with compatibility warnings; it retains loader filtering. [Web sources](sources/web.md) must be configured explicitly and cannot always establish a version or compatibility.
 
 ## Scheduled checks
 

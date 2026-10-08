@@ -15,24 +15,28 @@ final class Modrinth {
         if (!source.id().matches("[A-Za-z0-9_-]+")) throw new IOException("Modrinth project must be a slug or project ID, not a full URL");
         JsonArray versions = new JsonArray(); versions.add(source.minecraft());
         return "https://api.modrinth.com/v2/project/" + source.id() + "/version?loaders="
-                + encode("[\"paper\",\"spigot\",\"bukkit\"]") + "&game_versions=" + encode(versions.toString()) + "&include_changelog=false";
+                + encode("[\"paper\",\"spigot\",\"bukkit\"]")
+                + (source.enabled() ? "" : "&game_versions=" + encode(versions.toString())) + "&include_changelog=false";
     }
     private static String encode(String value) { return URLEncoder.encode(value, StandardCharsets.UTF_8); }
 
     static Remote.Release select(JsonArray versions, Remote.Source source) throws IOException {
         JsonObject latest = null;
         Instant newest = Instant.MIN;
+        boolean latestGameMatches = false;
         for (JsonElement element : versions) {
             JsonObject v = element.getAsJsonObject();
             if (v.has("status") && !"listed".equals(v.get("status").getAsString())) continue;
             boolean gameMatches = false, loaderMatches = false;
             for (JsonElement game : v.getAsJsonArray("game_versions")) if (source.minecraft().equals(game.getAsString())) gameMatches = true;
             for (JsonElement loader : v.getAsJsonArray("loaders")) if (LOADERS.contains(loader.getAsString())) loaderMatches = true;
-            if (!gameMatches || !loaderMatches) continue;
+            if ((!gameMatches && !source.enabled()) || !loaderMatches) continue;
             Instant published = Instant.parse(v.get("date_published").getAsString());
-            if (published.isAfter(newest)) { newest = published; latest = v; }
+            if (published.isAfter(newest)) { newest = published; latest = v; latestGameMatches = gameMatches; }
         }
-        if (latest == null) throw Failure.problem(Failure.Kind.NO_COMPATIBLE_RELEASE, "No Paper/Spigot/Bukkit release (including alpha/beta) listed for Minecraft " + source.minecraft());
+        if (latest == null) throw Failure.problem(Failure.Kind.NO_COMPATIBLE_RELEASE, source.enabled()
+                ? "No listed Paper/Spigot/Bukkit releases found (including alpha/beta)"
+                : "No Paper/Spigot/Bukkit release (including alpha/beta) listed for Minecraft " + source.minecraft());
         Pattern pattern = Pattern.compile(source.asset());
         List<JsonObject> files = new ArrayList<>(), primary = new ArrayList<>();
         for (JsonElement element : latest.getAsJsonArray("files")) {
@@ -52,6 +56,8 @@ final class Modrinth {
         }
         return new Remote.Release(latest.get("version_number").getAsString(), selected == null ? null : selected.get("url").getAsString(),
                 "https://modrinth.com/plugin/" + source.id() + "/version/" + latest.get("id").getAsString(), hash, null,
-                selected == null ? null : selected.get("filename").getAsString(), ReleaseType.modrinth(latest.get("version_type").getAsString()));
+                selected == null ? null : selected.get("filename").getAsString(), ReleaseType.modrinth(latest.get("version_type").getAsString()),
+                latestGameMatches ? null : "[WARNING] This release does not list Minecraft " + source.minecraft()
+                        + ". The installed plugin is enabled, but startup does not verify the new release's compatibility. Review the publisher's notes before installing.");
     }
 }

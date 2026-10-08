@@ -19,8 +19,17 @@ final class Remote {
             this.code = code; this.host = host; retryAfterSeconds = retry;
         }
     }
-    record Source(String name, String installed, String type, String id, String asset, String minecraft) {}
-    record Release(String version, String download, String page, String sha512, String sha256, String filename, ReleaseType type) {
+    record Source(String name, String installed, String type, String id, String asset, String minecraft, boolean enabled) {
+        Source(String name, String installed, String type, String id, String asset, String minecraft) {
+            this(name, installed, type, id, asset, minecraft, false);
+        }
+        Source withEnabled(boolean value) { return new Source(name, installed, type, id, asset, minecraft, value); }
+    }
+    record Release(String version, String download, String page, String sha512, String sha256, String filename, ReleaseType type,
+                   String compatibilityWarning) {
+        Release(String version, String download, String page, String sha512, String sha256, String filename, ReleaseType type) {
+            this(version, download, page, sha512, sha256, filename, type, null);
+        }
         Release(String version, String download, String page, String sha512, String sha256, String filename) {
             this(version, download, page, sha512, sha256, filename, ReleaseType.UNKNOWN);
         }

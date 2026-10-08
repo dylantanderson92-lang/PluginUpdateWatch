@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.1-SNAPSHOT (unreleased)
+
+- Check enabled plugins against the newest listed Modrinth Paper/Spigot/Bukkit release when Minecraft-version labels are missing. Keep CURRENT reports quiet and warn before downloading an unlisted-compatibility release.
+- Keep strict game-version filtering for disabled plugins and preserve errors for failed checks.
+- Add blank lines between config entries during scans and cleanup, including existing unchanged entries.
+- Restore bStats, Gson and jsoup relocation and test the final shaded JAR, including bStats' own relocation check.
+
 ## 1.4.0
 
 [Release and downloads](https://github.com/dylantanderson92-lang/PluginUpdateWatch/releases/tag/v1.4.0). Existing 1.3.x configurations remain supported; keep the configuration folder when upgrading.
