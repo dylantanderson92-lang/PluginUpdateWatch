@@ -1,0 +1,43 @@
+# Scan installed plugins at startup. Fill in blank source links after detection.
+check-interval-minutes: 360
+notify-on-join: true
+# Empty uses the parent of this plugin's data folder. Relative paths use the server working directory.
+plugins-directory: ""
+debug: false
+# Basic bStats usage metrics (plugin ID 34400); also respects plugins/bStats/config.yml.
+# Set false and run /pu reload to stop this plugin reporting. Defaults true in older configs.
+metrics:
+  enabled: true
+network:
+  connect-timeout-seconds: 10
+  read-timeout-seconds: 15
+  metadata-timeout-seconds: 30
+  attempts: 3
+downloads:
+  max-size-mib: 100
+  timeout-seconds: 120
+  # Default true for standard providers, including older configs. Web exception is below.
+  # Set false explicitly to allow them with warnings (needed for most Spigot files).
+  require-checksum: true
+  # Explicit web source entries may lack checksums. Warn and still validate plugin identity/JAR structure.
+  # Defaults true when omitted; set false to apply require-checksum to web sources too.
+  allow-unverified-web: true
+# Manual entries need only the exact JAR filename and source link.
+updates: []
+# updates:
+#   - jar: "ExamplePlugin-2.0.jar"
+#     source: "https://modrinth.com/plugin/example-plugin"
+#   - jar: "AnotherPlugin.jar"
+#     source: "https://www.spigotmc.org/resources/another-plugin.12345/"
+#   - jar: "GitHubPlugin.jar"
+#     source: "https://github.com/owner/repository"
+#   - jar: "Geyser-Spigot.jar"
+#     source: "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot"
+#   - jar: "floodgate-spigot.jar"
+#     source: "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot"
+#   - jar: "ExamplePlugin.jar"
+#     source: "https://example.org/wiki/downloads"
+# Explicit web sources offer best-effort downloads; release version/type may be unknown.
+# Modrinth/GitHub checks include alpha/beta/prereleases and warn about their type.
+# Existing 1.0/1.1 plugins entries are supported and not overwritten.
+plugins: {}

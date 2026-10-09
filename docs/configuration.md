@@ -1,0 +1,138 @@
+# Configuration
+
+The configuration file is:
+
+```text
+plugins/PluginUpdateWatch/config.yml
+```
+
+The current default configuration is:
+
+```yaml
+check-interval-minutes: 360
+notify-on-join: true
+plugins-directory: ""
+debug: false
+
+metrics:
+  enabled: true
+
+network:
+  connect-timeout-seconds: 10
+  read-timeout-seconds: 15
+  metadata-timeout-seconds: 30
+  attempts: 3
+
+downloads:
+  max-size-mib: 100
+  timeout-seconds: 120
+  require-checksum: true
+  allow-unverified-web: true
+
+updates: []
+
+plugins: {}
+```
+
+## Settings
+
+### `check-interval-minutes`
+
+How often update checks run.
+
+Default:
+
+```yaml
+check-interval-minutes: 360
+```
+
+The minimum supported interval is 15 minutes.
+
+### `notify-on-join`
+
+Notify administrators when they join and updates are available.
+
+```yaml
+notify-on-join: true
+```
+
+### `plugins-directory`
+
+```yaml
+plugins-directory: ""
+```
+
+An empty value uses the parent of PluginUpdateWatch's data folder.
+
+Relative paths use the server working directory.
+
+### `debug`
+
+```yaml
+debug: false
+```
+
+When enabled, an additional scan summary is logged.
+
+### Network settings
+
+```yaml
+network:
+  connect-timeout-seconds: 10
+  read-timeout-seconds: 15
+  metadata-timeout-seconds: 30
+  attempts: 3
+```
+
+Supported limits:
+
+| Setting | Range |
+| --- | --- |
+| `connect-timeout-seconds` | 1â€“60 |
+| `read-timeout-seconds` | 1â€“120 |
+| `metadata-timeout-seconds` | 1â€“300 |
+| `attempts` | 1â€“5 |
+
+### Download settings
+
+```yaml
+downloads:
+  max-size-mib: 100
+  timeout-seconds: 120
+  require-checksum: true
+  allow-unverified-web: true
+```
+
+Supported limits:
+
+| Setting | Range |
+| --- | --- |
+| `max-size-mib` | 1â€“1024 |
+| `timeout-seconds` | 1â€“1800 |
+
+`require-checksum` defaults to `true`, including when omitted from an older configuration. Standard provider downloads without a supported checksum are blocked unless this is explicitly set to `false`.
+
+`allow-unverified-web` defaults to `true`, including when omitted. It permits missing checksums only for explicitly configured web sources, with warnings before and after downloading. Set it to `false` while keeping `require-checksum: true` to require checksums for web sources too. Neither option bypasses a supplied invalid or mismatched checksum, HTTPS checks or JAR validation. See [Checksums & Security](checksums.md).
+
+## Usage metrics
+
+Version 1.3.3 adds `metrics.enabled`, defaulting to `true`. Set it to `false` and run `/pu reload` to stop this plugin reporting. See [Usage Metrics](metrics.md) for the reported data and the global bStats opt-out. Older configs without this setting default to enabled; adding the section is optional unless you want to opt out.
+
+## Applying changes
+
+Starting with the `1.4.1` release, scans and cleanup saves insert a blank line between entries in `updates:` and legacy `plugins:` sections. Run `/pu scan` to format existing entries, even if discovery finds no new plugins. Setting values are preserved; YAML comments may be reformatted.
+
+```yaml
+updates:
+  - jar: "FirstPlugin.jar"
+    source: "https://modrinth.com/plugin/first-plugin"
+
+  - jar: "SecondPlugin.jar"
+    source: "https://github.com/owner/second-plugin"
+```
+
+After editing the configuration, run:
+
+```text
+/pu reload
+```

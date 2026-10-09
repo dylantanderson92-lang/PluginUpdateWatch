@@ -1,0 +1,53 @@
+package dev.updatewatch;
+
+import java.math.BigInteger;
+import java.util.Locale;
+
+final class Versions {
+    enum Status { CURRENT, UPDATE, DIFFERENT, UNKNOWN }
+    static String normalize(String v) {
+        String value = v.trim().toLowerCase(Locale.ROOT)
+                .replaceFirst("^(?:paper|spigot|bukkit)[-_ ](?=v?\\d)", "")
+                .replaceFirst("[-_ ](?:paper|spigot|bukkit)$", "")
+                .replaceFirst("^v(?=\\d)", "");
+        // Plan publishes "5.8 build 3638", "5.8+build.3638" and "5.8.3638" for one build.
+        var numberedBuild = java.util.regex.Pattern.compile("^(\\d+(?:\\.\\d+)*)(?:[ +_-]+build[ ._-]+)(\\d+)$").matcher(value);
+        if (numberedBuild.matches()) return numberedBuild.group(1) + "." + numberedBuild.group(2);
+        String base = value.split("\\+", 2)[0];
+        // Numeric SemVer build metadata does not order versions; custom dev build IDs may matter.
+        return base.matches("\\d+(\\.\\d+)*") ? base : value;
+    }
+    static Status compare(String installed, String latest) {
+        String a = normalize(installed), b = normalize(latest);
+        if (a.equals(b)) return Status.CURRENT;
+        var left = parsed(a); var right = parsed(b);
+        if (left == null || right == null) return Status.DIFFERENT;
+        int core = numbers(left.core(), right.core());
+        if (core != 0) return core < 0 ? Status.UPDATE : Status.CURRENT;
+        if (left.channel() == null && right.channel() == null) return Status.CURRENT;
+        // Compare explicit counters within the same channel only. An omitted counter
+        // or custom +metadata cannot establish which development build is newer.
+        if (java.util.Objects.equals(left.channel(), right.channel()) && left.counter() != null && right.counter() != null
+                && left.metadata() == null && right.metadata() == null)
+            return numbers(left.counter(), right.counter()) < 0 ? Status.UPDATE : Status.CURRENT;
+        // Standard numbered alpha/beta/rc builds precede a stable release of the same core.
+        if (left.numberedPrerelease() && right.channel() == null) return Status.UPDATE;
+        if (left.channel() == null && right.numberedPrerelease()) return Status.CURRENT;
+        return Status.DIFFERENT;
+    }
+    private record Parsed(String core, String channel, String counter, String metadata) {
+        boolean numberedPrerelease() { return counter != null && java.util.Set.of("alpha", "beta", "rc").contains(channel) && metadata == null; }
+    }
+    private static Parsed parsed(String value) {
+        var match = java.util.regex.Pattern.compile("^(\\d+(?:\\.\\d+)*)(?:-(alpha|beta|rc|snapshot|dev)(?:[.-]?(\\d+(?:\\.\\d+)*))?)?(?:\\+(.+))?$").matcher(value);
+        return match.matches() ? new Parsed(match.group(1), match.group(2), match.group(3), match.group(4)) : null;
+    }
+    private static int numbers(String a, String b) {
+        String[] aa = a.split("\\."), bb = b.split("\\.");
+        for (int i = 0; i < Math.max(aa.length, bb.length); i++) {
+            int c = new BigInteger(i < aa.length ? aa[i] : "0").compareTo(new BigInteger(i < bb.length ? bb[i] : "0"));
+            if (c != 0) return c;
+        }
+        return 0;
+    }
+}

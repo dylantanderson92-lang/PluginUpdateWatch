@@ -1,0 +1,45 @@
+name: Sync published release notes
+on:
+  push:
+    branches: [main]
+    paths: ['RELEASE-NOTES.md', '.github/workflows/release-notes.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: published-release-notes
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update notes without changing the tag or assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version="$(cat .github/release-version)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(head -n 1 RELEASE-NOTES.md)" = "# PluginUpdateWatch $version"
+          tag="v$version"
+          if ! gh release view "$tag" --json body --jq '.body' > /tmp/existing-release-notes.md; then
+            echo "::notice::No published release found for $tag; the release workflow will provide its notes."
+            exit 0
+          fi
+          sed '/^---$/,$d' RELEASE-NOTES.md > /tmp/curated-release-notes.md
+          python3 - <<'PY'
+          from pathlib import Path
+          old = Path('/tmp/existing-release-notes.md').read_text()
+          notes = Path('/tmp/curated-release-notes.md').read_text().rstrip()
+          marker = "\n## What's Changed\n"
+          if marker in old:
+              notes += "\n\n## What's Changed\n" + old.split(marker, 1)[1]
+          Path('/tmp/updated-release-notes.md').write_text(notes + '\n')
+          PY
+          gh release edit "$tag" --notes-file /tmp/updated-release-notes.md
+

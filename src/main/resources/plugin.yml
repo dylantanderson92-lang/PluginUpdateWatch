@@ -1,0 +1,18 @@
+name: PluginUpdateWatch
+version: ${project.version}
+main: dev.updatewatch.UpdateWatch
+# Minimum API, not a version range. See COMPATIBILITY.md and Compatibility.java.
+# Targeted Paper range: 1.21.11–26.3. Tested APIs/runtimes are listed in COMPATIBILITY.md.
+# Newer/unknown Minecraft versions receive a startup warning; live server coverage is separate.
+api-version: '1.21.11'
+description: Checks configured plugin sources and downloads updates on request.
+commands:
+  pluginupdates:
+    aliases: [pu]
+    description: Check and download plugin updates
+    permission: pluginupdatewatch.admin
+    usage: /pu [list|scan|check|download <plugin>|cleanup [confirm]|stats|reload]
+permissions:
+  pluginupdatewatch.admin:
+    default: op
+    description: View updates, configure sources and download plugin JARs
