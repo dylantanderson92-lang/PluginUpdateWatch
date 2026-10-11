@@ -138,7 +138,8 @@ async def announce(
     )
 
     embed.set_footer(
-        text=interaction.guild.name
+        text=interaction.guild.name,
+        icon_url=interaction.guild.icon.url if interaction.guild.icon else None
     )
 
     # Send announcement
