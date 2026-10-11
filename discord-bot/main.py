@@ -23,21 +23,25 @@ async def on_member_join(member):
     await member.send(f"Welcome to the PluginUpdateWatch server {member.name}")
 
 
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def announce(ctx, channel: discord.TextChannel, title: str, *, message: str):
-    """
-    Usage: !announce #channel "Your Title Here" Your announcement message here
-    """
-    embed = discord.Embed(
-        title=f"📢 {title}",  # Uses the title you provided in the command
-        description=message,
-        color=discord.Color.blue()
-    )
-    embed.set_footer(text=f"Announced by {ctx.author.display_name}")
-
-    await channel.send(embed=embed)
-    await ctx.send(f"Announcement successfully sent to {channel.mention}!", delete_after=5)
+@bot.tree.command(name='announce', description='Send a formatted announcement in a channel')
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.describe(channel='Channel for announcement', title='Announcement title',
+                       message='Announcement body')
+async def announce(interaction: discord.Interaction, channel: discord.TextChannel,
+                   title: str, message: str):
+    if not interaction.guild or not isinstance(interaction.user, discord.Member) or not admin(interaction.user):
+        return await interaction.response.send_message('You need Manage Server permission.', ephemeral=True)
+    if channel.guild.id != interaction.guild.id:
+        return await interaction.response.send_message('Select a channel in this server.', ephemeral=True)
+    if len(title) > 256 or len(message) > 4000:
+        return await interaction.response.send_message('Title or message is too long.', ephemeral=True)
+    embed = discord.Embed(title=f'📢 {title}', description=message, color=0x5865F2)
+    embed.set_footer(text=f'Posted by {interaction.set.server_name}')
+    try:
+        await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
+    except discord.HTTPException:
+        return await interaction.response.send_message('Cannot post there. Check my channel permissions.', ephemeral=True)
+    await interaction.response.send_message(f'Announcement posted in {channel.mention}.', ephemeral=True)
 
 
 # Error handling if someone without permissions tries to use it
