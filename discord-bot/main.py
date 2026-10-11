@@ -138,7 +138,7 @@ async def announce(
     )
 
     embed.set_footer(
-        text=f"Posted by {interaction.user.display_name}"
+        text=interaction.guild.name
     )
 
     # Send announcement
